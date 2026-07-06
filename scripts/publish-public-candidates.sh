@@ -16,7 +16,7 @@ LOCK="${TMPDIR:-/tmp}/hermes-toolbox-publisher.lock"
   fi
   cd "$REPO"
   if git rev-parse --verify origin/main >/dev/null 2>&1; then
-    git pull --rebase --autostash origin main >/dev/null
+    git pull --rebase --autostash origin main >/dev/null 2>&1
   fi
   cmd=(python3 scripts/scan-public-candidates.py --mode publish --hermes-home "$HERMES_HOME_DIR" --repo "$REPO")
   if [ -n "$PRIVATE_PREFIX" ]; then cmd+=(--private-profile-prefix "$PRIVATE_PREFIX"); fi
