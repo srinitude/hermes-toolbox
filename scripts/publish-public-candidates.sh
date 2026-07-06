@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export PATH="/usr/local/bin:/usr/bin:/bin:${PATH:-}"
+
 REPO="${HERMES_TOOLBOX_REPO:-$HOME/hermes-toolbox}"
 HERMES_HOME_DIR="${HERMES_HOME:-$HOME/.hermes}"
 PRIVATE_PREFIX="${HERMES_PRIVATE_PROFILE_PREFIX:-}"
