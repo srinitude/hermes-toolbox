@@ -89,8 +89,14 @@ def main() -> int:
     write(repo / 'inventory' / 'public-manifest.json', json.dumps(manifest, indent=2, sort_keys=True) + '\n')
     fingerprints = {}
     for path in sorted(repo.rglob('*')):
-        if path.is_file() and '.git' not in path.parts:
-            fingerprints[path.relative_to(repo).as_posix()] = sha(path)
+        if not path.is_file() or '.git' in path.parts:
+            continue
+        rel = path.relative_to(repo).as_posix()
+        if rel == 'inventory/source-fingerprints.json':
+            continue
+        if '__pycache__' in path.parts or rel.endswith(('.pyc', '.pyo')):
+            continue
+        fingerprints[rel] = sha(path)
     write(repo / 'inventory' / 'source-fingerprints.json', json.dumps(fingerprints, indent=2, sort_keys=True) + '\n')
     subprocess.check_call(['python3', str(repo / 'scripts' / 'validate-public-safety.py')], cwd=repo)
     subprocess.check_call(['python3', str(repo / 'scripts' / 'validate-identity-neutrality.py')], cwd=repo)
