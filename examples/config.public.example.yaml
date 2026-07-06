@@ -1,0 +1,7 @@
+# Example public Hermes configuration fragment.
+# Copy into a profile only after reviewing local needs.
+terminal:
+  cwd: "$HOME/projects/example"
+skills:
+  enabled:
+    - prompt-enhancer

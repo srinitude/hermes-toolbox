@@ -1,0 +1,12 @@
+name: Bug report
+description: Report a problem with a public toolbox artifact.
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the public-safe problem.
+    validations:
+      required: true

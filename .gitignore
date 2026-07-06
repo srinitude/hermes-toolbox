@@ -1,0 +1,62 @@
+# Secrets and auth stores: never public
+.env
+*.env
+.env.*
+**/.env
+**/.env.*
+**/auth.json
+**/mcp-tokens/**
+**/nous_auth.json
+**/*token*
+**/*secret*
+
+# Hermes private/runtime state: never public
+**/state.db
+**/state.db-*
+**/sessions/**
+**/logs/**
+**/cache/**
+**/backups/**
+**/checkpoints/**
+**/state-snapshots/**
+**/.hermes_history
+**/.skills_prompt_snapshot.json
+**/.update_check
+**/models_dev_cache.json
+**/context_length_cache.yaml
+**/memories/**
+
+# Sensitive/private profile runtime content stays private.
+# Sanitized public profile packages may exist under profiles/.
+**/profiles/**/.env
+**/profiles/**/*.env
+**/profiles/**/auth.json
+**/profiles/**/mcp-tokens/**
+**/profiles/**/memories/**
+**/profiles/**/sessions/**
+**/profiles/**/logs/**
+**/profiles/**/cache/**
+**/profiles/**/state.db*
+**/profiles/**/pairing/**
+**/private-profiles/**
+
+# Sensitive/private plugin runtime content stays private.
+# Sanitized public plugin packages may exist under plugins/.
+**/plugins/**/.env
+**/plugins/**/*.env
+**/plugins/**/auth.json
+**/plugins/**/mcp-tokens/**
+**/plugins/**/memories/**
+**/plugins/**/sessions/**
+**/plugins/**/logs/**
+**/plugins/**/cache/**
+**/plugins/**/state.db*
+**/plugins/**/pairing/**
+**/private-plugins/**
+
+# Local build/editor state
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.DS_Store

@@ -1,0 +1,31 @@
+{
+  "plugins": [],
+  "profiles": [],
+  "skills": [
+    {
+      "path": "skills/autonomous-ai-agents/openrouter-mcp-server/SKILL.md",
+      "sha256": "e6e66db0227c873464b24cd62d2e024482465c8e4db4be7d592fd59b448293c7"
+    },
+    {
+      "path": "skills/hermes-agent/hermes-config-audits/SKILL.md",
+      "sha256": "b5d6f77d43df06fcaca06f59074a61612093f863ecdf7b55ce528ff32063af70"
+    },
+    {
+      "path": "skills/hermes-agent/honcho-memory-provider/SKILL.md",
+      "sha256": "da3dfa0fbc5249e38ad69b772d8896f64ec98f5a09b7f04defaa76d466635f44"
+    },
+    {
+      "path": "skills/hermes-agent/profile-builder/SKILL.md",
+      "sha256": "496c12315a88a455a564fec1cda2c628f8326b16e42e090cc65436edfafc8a56"
+    },
+    {
+      "path": "skills/software-development/plugin-builder/SKILL.md",
+      "sha256": "d36b1b1bd1b4cd6fee6acd7ce66621c3a343db788db3960ab7908e5f3d89704d"
+    },
+    {
+      "path": "skills/software-development/prompt-enhancer/SKILL.md",
+      "sha256": "149ad3618a11bce3f1d2aacb730e599aca64ffe7f25cbf24d2a9b34d34713201"
+    }
+  ],
+  "version": 1
+}

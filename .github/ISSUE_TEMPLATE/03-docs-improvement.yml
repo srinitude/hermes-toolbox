@@ -1,0 +1,12 @@
+name: Docs improvement
+description: Suggest a public-safe documentation improvement.
+title: "docs: "
+labels: [documentation]
+body:
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Improvement
+      description: Explain what should be clearer.
+    validations:
+      required: true

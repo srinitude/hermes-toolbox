@@ -1,0 +1,12 @@
+name: Toolbox request
+description: Request a reusable skill, script, profile package, or plugin package.
+title: "request: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: Describe the reusable, public-safe outcome.
+    validations:
+      required: true

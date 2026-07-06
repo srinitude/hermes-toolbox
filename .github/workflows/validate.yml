@@ -1,0 +1,26 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  public-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate public safety
+        run: python3 scripts/validate-public-safety.py
+      - name: Validate identity neutrality
+        run: python3 scripts/validate-identity-neutrality.py
+      - name: Syntax checks
+        run: |
+          bash -n scripts/install-toolbox.sh
+          bash -n scripts/publish-public-candidates.sh
+          python3 -m py_compile scripts/export-public-toolbox.py scripts/scan-public-candidates.py scripts/validate-public-safety.py scripts/validate-identity-neutrality.py
