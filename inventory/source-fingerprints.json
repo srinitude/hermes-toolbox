@@ -28,7 +28,7 @@
   "profiles/README.md": "fdb26d6af59cf6d22e3985814bbc15aea36c557436966bbc2727246f720af1a3",
   "scripts/export-public-toolbox.py": "4329c55975b8883a125ba7dcf7cd316c7e283d61b0ee17edf6d91d3b32222055",
   "scripts/install-toolbox.sh": "4be7d097b1d3f5dd412f049b1cf06905db8d5e626efbf455804fb9d558ddb870",
-  "scripts/publish-public-candidates.sh": "0f338e88d5ef04f371d203a928f8f9faf97ef05f5fc0f071522c77779e90bb5b",
+  "scripts/publish-public-candidates.sh": "9afa11b7399e870ba59cbcf86f05f8cf9f05933db2e1829144873dc0507ae9d2",
   "scripts/scan-public-candidates.py": "1a9f15ea3fcc57fe8d1721f2814cd95800487716c56b817ce0c52f3ea94161c2",
   "scripts/validate-identity-neutrality.py": "818d1c45a101a54757c460b975a222ffb13b43324444d2256aed4f4004a60db1",
   "scripts/validate-public-safety.py": "8081f129185fa77d120b624175d7f91f2600a6b54cde83a2688382ca7b423d90",
