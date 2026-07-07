@@ -1,4 +1,13 @@
 {
+  "personalities": [
+    {
+      "config_sha256": "ce0d5ec0ea6c6612efda81fde5a7d380cc04ef70cc415788475d984c8a49482e",
+      "manifest_sha256": "1d236893c86730bba0ed228fc116ee7a0c8188348fe6f9fcd9343f8dd2cd44ff",
+      "name": "validator",
+      "path": "primitives/personalities/validator",
+      "sanitized": true
+    }
+  ],
   "plugins": [],
   "profiles": [],
   "skills": [

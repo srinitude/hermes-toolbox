@@ -1,0 +1,29 @@
+{
+  "activation": {
+    "command": "/personality validator",
+    "optional_persistent_keys": [
+      "agent.system_prompt",
+      "display.personality"
+    ]
+  },
+  "config_file": "config.public.yaml",
+  "config_keys": [
+    "agent.personalities.validator"
+  ],
+  "description": "Validation-focused /personality overlay for Hermes Agent sessions.",
+  "excluded_categories": [
+    "env",
+    "auth",
+    "tokens",
+    "memories",
+    "sessions",
+    "logs",
+    "cache",
+    "state",
+    "pairing",
+    "runtime"
+  ],
+  "name": "validator",
+  "sanitized": true,
+  "type": "personality"
+}

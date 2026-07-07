@@ -63,9 +63,28 @@ def main() -> int:
     hermes_home = Path(args.hermes_home).resolve()
     ensure_local_info(repo, args.private_profile_prefix, args.public_plugin_profile, args.approved_author_line)
 
-    manifest = {'version': 1, 'skills': [], 'profiles': [], 'plugins': []}
+    manifest = {'version': 1, 'skills': [], 'profiles': [], 'plugins': [], 'personalities': []}
     for skill_path in sorted((repo / 'skills').rglob('SKILL.md')):
         manifest['skills'].append({'path': skill_path.relative_to(repo).as_posix(), 'sha256': sha(skill_path)})
+
+    for personality_manifest in sorted((repo / 'primitives' / 'personalities').glob('*/manifest.json')):
+        try:
+            personality_data = json.loads(personality_manifest.read_text(encoding='utf-8'))
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f'invalid personality manifest {personality_manifest}: {exc}') from exc
+        if personality_data.get('type') != 'personality' or personality_data.get('sanitized') is not True:
+            raise SystemExit(f'personality manifest must declare type=personality and sanitized=true: {personality_manifest}')
+        config_rel = personality_data.get('config_file')
+        config_path = personality_manifest.parent / str(config_rel or '')
+        if not config_rel or not config_path.exists():
+            raise SystemExit(f'personality manifest references missing config file: {personality_manifest}')
+        manifest['personalities'].append({
+            'name': personality_data.get('name', personality_manifest.parent.name),
+            'path': personality_manifest.parent.relative_to(repo).as_posix(),
+            'manifest_sha256': sha(personality_manifest),
+            'config_sha256': sha(config_path),
+            'sanitized': True,
+        })
 
     # Export sanitized plugin packages from configured source profile when present.
     if args.public_plugin_profile:
