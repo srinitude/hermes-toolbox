@@ -8,6 +8,8 @@ A candidate is publishable only when all checks pass.
 - Profile packages must be generic and sanitized.
 - Plugin packages must come from the configured public-plugin-source profile,
   have generic names, and be sanitized.
+- Personality primitives must be reusable custom `/personality` presets with
+  public-safe config snippets and sanitized manifests.
 
 ## Completeness
 
@@ -17,6 +19,8 @@ A candidate is publishable only when all checks pass.
 - Scripts pass syntax checks.
 - Profile packages include a manifest.
 - Plugin packages include a manifest.
+- Personality primitives include a manifest and a relative `config_file` that
+  resolves inside the primitive package.
 
 ## Public safety
 

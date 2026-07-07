@@ -70,6 +70,20 @@ def deny_terms() -> list[str]:
 def rel(path: Path) -> str:
     return path.relative_to(REPO).as_posix()
 
+def safe_child_file(root: Path, rel_path: object) -> tuple[Path | None, str | None]:
+    if not isinstance(rel_path, str) or not rel_path.strip():
+        return None, 'config_file must be a non-empty relative path'
+    path = Path(rel_path)
+    if path.is_absolute() or '..' in path.parts:
+        return None, 'config_file must stay inside the personality package'
+    root_resolved = root.resolve()
+    candidate = (root / path).resolve()
+    if root_resolved not in candidate.parents:
+        return None, 'config_file resolves outside the personality package'
+    if not candidate.is_file():
+        return None, 'missing config_file target'
+    return candidate, None
+
 def path_is_forbidden(path: Path) -> str | None:
     r = rel(path)
     if '__pycache__' in Path(r).parts or r.endswith(('.pyc', '.pyo')):
@@ -160,9 +174,9 @@ def validate() -> list[str]:
                 errors.append(f'primitives/personalities/{child.name}/manifest.json: type must be personality')
             if data.get('sanitized') is not True:
                 errors.append(f'primitives/personalities/{child.name}/manifest.json: sanitized must be true')
-            config_file = data.get('config_file')
-            if not config_file or not (child / str(config_file)).exists():
-                errors.append(f'primitives/personalities/{child.name}/manifest.json: missing config_file target')
+            _, config_error = safe_child_file(child, data.get('config_file'))
+            if config_error:
+                errors.append(f'primitives/personalities/{child.name}/manifest.json: {config_error}')
             excluded = set(data.get('excluded_categories', []))
             required = {'env', 'auth', 'tokens', 'memories', 'sessions', 'logs', 'cache', 'state', 'pairing', 'runtime'}
             if not required.issubset(excluded):

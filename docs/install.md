@@ -6,7 +6,8 @@ Run a dry-run first:
 ./scripts/install-toolbox.sh
 ```
 
-Apply public skills:
+Apply public skills. Optional flags such as `--personalities` and `--plugins`
+are additive; `--apply` always installs public skills first.
 
 ```bash
 ./scripts/install-toolbox.sh --apply --target "${HERMES_HOME:-$HOME/.hermes}"

@@ -9,3 +9,5 @@ Current baseline:
   manifest.
 - Public plugin packages: none unless exported under `plugins/` with a
   manifest.
+- Public personality primitives: reusable custom `/personality` presets under
+  `primitives/personalities/`, each with `config.public.yaml` and `manifest.json`.

@@ -35,6 +35,20 @@ def copy_tree_public(src: Path, dst: Path):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, target)
 
+def safe_child_file(root: Path, rel: object, label: str) -> Path:
+    if not isinstance(rel, str) or not rel.strip():
+        raise SystemExit(f'{label} must be a non-empty relative path')
+    rel_path = Path(rel)
+    if rel_path.is_absolute() or '..' in rel_path.parts:
+        raise SystemExit(f'{label} must stay inside its package: {rel}')
+    root_resolved = root.resolve()
+    path = (root / rel_path).resolve()
+    if root_resolved not in path.parents:
+        raise SystemExit(f'{label} resolves outside its package: {rel}')
+    if not path.is_file():
+        raise SystemExit(f'{label} references missing file: {rel}')
+    return path
+
 def ensure_local_info(repo: Path, private_prefix: str | None, public_plugin_profile: str | None, approved_author_line: str | None):
     info = repo / '.git' / 'info'
     info.mkdir(parents=True, exist_ok=True)
@@ -74,10 +88,11 @@ def main() -> int:
             raise SystemExit(f'invalid personality manifest {personality_manifest}: {exc}') from exc
         if personality_data.get('type') != 'personality' or personality_data.get('sanitized') is not True:
             raise SystemExit(f'personality manifest must declare type=personality and sanitized=true: {personality_manifest}')
-        config_rel = personality_data.get('config_file')
-        config_path = personality_manifest.parent / str(config_rel or '')
-        if not config_rel or not config_path.exists():
-            raise SystemExit(f'personality manifest references missing config file: {personality_manifest}')
+        config_path = safe_child_file(
+            personality_manifest.parent,
+            personality_data.get('config_file'),
+            f'{personality_manifest}: config_file',
+        )
         manifest['personalities'].append({
             'name': personality_data.get('name', personality_manifest.parent.name),
             'path': personality_manifest.parent.relative_to(repo).as_posix(),
