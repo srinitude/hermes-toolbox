@@ -22,9 +22,14 @@ Use this when a prompt executes file/script/config changes but the workspace has
 - Restore/read-back checks for backup workflows.
 - If the verification reminder names previous `/tmp/hermes-verify-*` paths as changed, make the fresh verifier assert those old paths are absent, then clean up the new verifier too. This avoids a loop where the verification artifact itself remains the only unverified changed path.
 - For already-pushed automation changes, verify the live repository is clean and local `HEAD` matches the intended remote branch after the ad-hoc checks, so the result proves the committed artifact rather than only a working-tree draft.
+- When a verifier must create a temporary repository fixture for code that calls `git ls-files`, clone the repo into the temp directory instead of using `git archive`; archive fixtures have no `.git` metadata and can exercise a different code path.
+- When testing public exporters/validators, include both a positive fixture that should pass and a deliberately bad fixture that must fail with the expected diagnostic, then remove the bad fixture and prove validation passes again.
+- Generate complex verifier scripts with a single raw string or a temporary file writer that avoids nested triple-quoted f-strings; syntax-check the verifier itself before trusting its result.
+- If an exporter has optional publication surfaces such as plugins or profiles, only enable those flags in the verifier when that surface is in scope; otherwise a valid skill-export test can be polluted by unrelated generated packages.
 
 ## Pitfalls
 
 - Do not leave `/tmp/hermes-verify-*` scripts behind if they can be safely removed.
 - Do not call this canonical suite green unless a project-standard test/lint/build command actually ran.
 - Avoid persisting environment-specific failures as durable rules; capture the verification pattern, not the transient failure.
+- Do not treat a failed first verifier as evidence about the product code until you have ruled out verifier bugs such as quoting/syntax errors, missing `.git` metadata, or out-of-scope fixture generation.
