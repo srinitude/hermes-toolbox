@@ -1,0 +1,23 @@
+
+name: hermes-agent-tutorial
+version: 0.1.0
+description: Public-safe tutorial profile package for learning Hermes Agent.
+homepage: https://github.com/srinitude/hermes-toolbox
+files:
+  - PROFILE.md
+  - SOUL.md
+  - config.public.yaml
+requires_user_action:
+  - Complete Hermes setup/auth/model configuration in the installer's own environment.
+  - Install and enable desired tutorial plugin packages from the toolbox repository.
+excludes:
+  - .env
+  - auth.json
+  - mcp-tokens
+  - memories
+  - sessions
+  - logs
+  - cache
+  - state.db
+  - pairing
+  - runtime progress

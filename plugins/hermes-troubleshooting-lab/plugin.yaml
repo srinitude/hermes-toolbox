@@ -1,0 +1,22 @@
+name: hermes-troubleshooting-lab
+kind: standalone
+version: 0.1.0
+description: Teaches users how to diagnose Hermes when something breaks.
+provides_tools:
+- tutorial_explain_error
+- tutorial_suggest_recovery_steps
+- tutorial_classify_failure
+provides_commands:
+- troubleshoot
+- explain-error
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '3'
+provides_skills:
+- doctor-basics
+- logs-basics
+- mcp-debugging
+- plugin-debugging

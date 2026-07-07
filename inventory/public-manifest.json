@@ -8,8 +8,106 @@
       "sanitized": true
     }
   ],
-  "plugins": [],
-  "profiles": [],
+  "plugins": [
+    {
+      "path": "plugins/hermes-accessibility-coach",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-assessment-certifier",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-capstone-orchestrator",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-command-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-concept-glossary",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-config-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-cron-automation-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-docs-sync-tutor",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-example-gallery",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-gateway-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-learning-progress",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-mcp-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-memory-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-plugin-builder-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-profile-builder-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-profiles-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-prompting-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-safety-sandbox-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-setup-coach",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-skills-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-tools-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-troubleshooting-lab",
+      "sanitized": true
+    },
+    {
+      "path": "plugins/hermes-tutorial-compass",
+      "sanitized": true
+    }
+  ],
+  "profiles": [
+    {
+      "path": "profiles/hermes-agent-tutorial",
+      "sanitized": true
+    }
+  ],
   "skills": [
     {
       "path": "skills/autonomous-ai-agents/openrouter-mcp-server/SKILL.md",

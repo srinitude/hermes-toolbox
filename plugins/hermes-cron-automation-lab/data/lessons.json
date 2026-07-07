@@ -1,0 +1,9 @@
+[
+  {
+    "body": "Cron jobs run in fresh sessions with self-contained prompts; TUI-local jobs do not live-deliver back into the TUI.",
+    "id": "cron-automation-intro",
+    "level": "2",
+    "summary": "Cron jobs run in fresh sessions with self-contained prompts; TUI-local jobs do not live-deliver back into the TUI.",
+    "title": "Hermes Cron Automation Lab"
+  }
+]

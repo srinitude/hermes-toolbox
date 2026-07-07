@@ -1,0 +1,11 @@
+{
+  "commands": [
+    "safety-lab",
+    "is-this-safe"
+  ],
+  "tools": [
+    "classify_hermes_action_risk",
+    "explain_write_surface",
+    "suggest_safer_hermes_action"
+  ]
+}

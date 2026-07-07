@@ -1,0 +1,11 @@
+{
+  "commands": [
+    "mcp-lab",
+    "mcp-or-plugin"
+  ],
+  "tools": [
+    "tutorial_compare_mcp_vs_plugin",
+    "tutorial_explain_mcp_manifest",
+    "tutorial_plan_mcp_setup"
+  ]
+}

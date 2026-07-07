@@ -1,0 +1,36 @@
+{
+  "excluded_categories": [
+    "env",
+    "auth",
+    "tokens",
+    "memories",
+    "sessions",
+    "logs",
+    "cache",
+    "state",
+    "pairing",
+    "runtime"
+  ],
+  "included_files": [
+    "README.md",
+    "__init__.py",
+    "commands.py",
+    "data/commands.json",
+    "data/lessons.json",
+    "data/plugin.json",
+    "data/rubrics.json",
+    "manifest.json",
+    "plugin.yaml",
+    "schemas.py",
+    "skills/file-tool-practice/SKILL.md",
+    "skills/terminal-safety-practice/SKILL.md",
+    "skills/tools-overview/SKILL.md",
+    "skills/web-tool-practice/SKILL.md",
+    "tests/test_contract.py",
+    "tools.py"
+  ],
+  "package": "hermes-tools-lab",
+  "sanitized": true,
+  "source_gate": "configured-public-plugin-source-profile",
+  "type": "plugin"
+}

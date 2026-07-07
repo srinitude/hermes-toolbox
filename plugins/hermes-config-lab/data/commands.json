@@ -1,0 +1,11 @@
+{
+  "commands": [
+    "config-lab",
+    "config-explain"
+  ],
+  "tools": [
+    "tutorial_explain_config_key",
+    "tutorial_recommend_config_path",
+    "tutorial_check_config_safety"
+  ]
+}

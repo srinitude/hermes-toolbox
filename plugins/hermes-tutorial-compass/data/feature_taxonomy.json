@@ -1,0 +1,21 @@
+{
+  "features": [
+    "SOUL.md",
+    "approval prompt",
+    "context file",
+    "cron",
+    "gateway",
+    "mcp",
+    "memory",
+    "model",
+    "plugin",
+    "profile",
+    "provider",
+    "sandbox",
+    "session",
+    "skill",
+    "terminal backend",
+    "tool",
+    "toolset"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "commands": [
+    "troubleshoot",
+    "explain-error"
+  ],
+  "tools": [
+    "tutorial_explain_error",
+    "tutorial_suggest_recovery_steps",
+    "tutorial_classify_failure"
+  ]
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "body": "Practice safe commands such as `hermes --help`, `/help`, `/status`, and read-only inspection before changing settings.",
+    "id": "command-intro",
+    "level": "0",
+    "summary": "Practice safe commands such as `hermes --help`, `/help`, `/status`, and read-only inspection before changing settings.",
+    "title": "Hermes Command Lab"
+  }
+]

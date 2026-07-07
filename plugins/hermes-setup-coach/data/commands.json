@@ -1,0 +1,12 @@
+{
+  "commands": [
+    "setup-coach",
+    "setup-check",
+    "fix-setup"
+  ],
+  "tools": [
+    "tutorial_check_install",
+    "tutorial_check_provider",
+    "tutorial_explain_doctor_output"
+  ]
+}

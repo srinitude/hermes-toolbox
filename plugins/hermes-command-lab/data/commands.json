@@ -1,0 +1,10 @@
+{
+  "commands": [
+    "command-lab",
+    "practice-cli"
+  ],
+  "tools": [
+    "tutorial_generate_cli_exercise",
+    "tutorial_check_cli_answer"
+  ]
+}

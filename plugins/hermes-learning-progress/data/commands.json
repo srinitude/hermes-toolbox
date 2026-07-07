@@ -1,0 +1,13 @@
+{
+  "commands": [
+    "progress",
+    "review",
+    "resume-tutorial"
+  ],
+  "tools": [
+    "tutorial_record_progress",
+    "tutorial_get_progress",
+    "tutorial_mark_lesson_complete",
+    "tutorial_recommend_review"
+  ]
+}

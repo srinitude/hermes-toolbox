@@ -1,0 +1,9 @@
+[
+  {
+    "body": "Map each goal to profile primitives: identity, model, configuration, terminal, tools, skills, memory, automation, safety, performance, validation, and portability.",
+    "id": "profile-builder-intro",
+    "level": "3",
+    "summary": "Map each goal to profile primitives: identity, model, configuration, terminal, tools, skills, memory, automation, safety, performance, validation, and portability.",
+    "title": "Hermes Profile Builder Lab"
+  }
+]

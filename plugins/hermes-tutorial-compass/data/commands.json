@@ -1,0 +1,10 @@
+{
+  "commands": [
+    "tutorial"
+  ],
+  "tools": [
+    "tutorial_get_path",
+    "tutorial_next_lesson",
+    "tutorial_explain_concept"
+  ]
+}

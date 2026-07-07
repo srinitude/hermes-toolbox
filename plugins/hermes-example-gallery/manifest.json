@@ -1,0 +1,36 @@
+{
+  "excluded_categories": [
+    "env",
+    "auth",
+    "tokens",
+    "memories",
+    "sessions",
+    "logs",
+    "cache",
+    "state",
+    "pairing",
+    "runtime"
+  ],
+  "included_files": [
+    "README.md",
+    "__init__.py",
+    "commands.py",
+    "data/commands.json",
+    "data/lessons.json",
+    "data/plugin.json",
+    "data/rubrics.json",
+    "manifest.json",
+    "plugin.yaml",
+    "schemas.py",
+    "skills/first-chat-example/SKILL.md",
+    "skills/plugin-spec-example/SKILL.md",
+    "skills/profile-spec-example/SKILL.md",
+    "skills/safe-file-edit-example/SKILL.md",
+    "tests/test_contract.py",
+    "tools.py"
+  ],
+  "package": "hermes-example-gallery",
+  "sanitized": true,
+  "source_gate": "configured-public-plugin-source-profile",
+  "type": "plugin"
+}

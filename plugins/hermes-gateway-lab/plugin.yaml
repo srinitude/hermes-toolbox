@@ -1,0 +1,21 @@
+name: hermes-gateway-lab
+kind: standalone
+version: 0.1.0
+description: Teaches messaging gateway setup and secure operations.
+provides_tools:
+- tutorial_explain_gateway_platform
+- tutorial_gateway_readiness_check
+- tutorial_explain_gateway_error
+provides_commands:
+- gateway-lab
+- bot-safety-check
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '2'
+provides_skills:
+- gateway-basics
+- gateway-security
+- telegram-bot-basics
