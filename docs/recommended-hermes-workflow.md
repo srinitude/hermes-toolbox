@@ -2,7 +2,7 @@
 
 This workflow keeps Hermes work explicit, compartmentalized, and verifiable.
 
-1. Begin each session with `/personality validator`.
+1. Install the `validator` personality primitive if needed, then begin each session with `/personality validator`.
 2. Use `/prompt-enhancer [prompt]` before execution so the request names its
    objective, scope, write boundaries, source-of-truth checks, and validation
    threshold.

@@ -10,7 +10,8 @@ and documented operating patterns.
 - Sanitized reusable profile packages under `profiles/` when available.
 - Sanitized reusable plugin packages under `plugins/` when available.
 - Public validation scripts under `scripts/`.
-- Deterministic workflow documentation under `docs/` and `primitives/`.
+- Deterministic workflow documentation and installable primitives under `docs/` and `primitives/`.
+- The `validator` custom `/personality` preset under `primitives/personalities/validator/`.
 
 ## Recommended Hermes workflow
 
@@ -31,7 +32,13 @@ Dry-run by default:
 Apply public skills to a Hermes home:
 
 ```bash
-./scripts/install-toolbox.sh --apply --target "$HERMES_HOME"
+./scripts/install-toolbox.sh --apply --target "${HERMES_HOME:-$HOME/.hermes}"
+```
+
+Install the public `validator` `/personality` preset:
+
+```bash
+./scripts/install-toolbox.sh --apply --personalities --target "${HERMES_HOME:-$HOME/.hermes}"
 ```
 
 Plugin installation is explicit. Sanitized plugin packages are listed by the

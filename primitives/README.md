@@ -7,3 +7,7 @@ discover source -> classify candidate -> export sanitized copy -> validate publi
 ```
 
 See `docs/deterministic-workflow-primitives.md` for the full primitive list.
+
+Installable personality primitives live under `primitives/personalities/`.
+The `validator` package contains the public-safe `agent.personalities.validator`
+config snippet plus manifest metadata.

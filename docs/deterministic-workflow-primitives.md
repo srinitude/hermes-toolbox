@@ -3,7 +3,9 @@
 This repository packages reusable primitives that make Hermes workflows
 repeatable and auditable.
 
-- Validator personality primitive: start with `/personality validator`.
+- Validator personality primitive: install
+  `primitives/personalities/validator/config.public.yaml`, then start with
+  `/personality validator`.
 - Prompt-enhancement primitive: run `/prompt-enhancer [prompt]` before action.
 - Profile-compartmentalization primitive: use `/profile-builder [goal]` for
   isolated responsibilities.

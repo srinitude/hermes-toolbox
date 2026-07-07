@@ -20,7 +20,7 @@ TRAILER_RE = re.compile(r'(?im)^(co-authored-by|generated-by|ai-authored-by|ai-c
 
 def git_files() -> list[Path]:
     try:
-        out = subprocess.check_output(['git', 'ls-files'], cwd=REPO, text=True)
+        out = subprocess.check_output(['git', 'ls-files', '--cached', '--others', '--exclude-standard'], cwd=REPO, text=True)
         files = [REPO / line for line in out.splitlines() if line]
         if files:
             return files
@@ -141,6 +141,32 @@ def validate() -> list[str]:
                 errors.append(f'{pkg_root_name}/{child.name}/manifest.json: missing required excluded categories')
             if pkg_root_name == 'plugins' and not data.get('source_gate'):
                 errors.append(f'{pkg_root_name}/{child.name}/manifest.json: missing source gate')
+
+    personality_root = REPO / 'primitives' / 'personalities'
+    if personality_root.exists():
+        for child in personality_root.iterdir():
+            if not child.is_dir():
+                continue
+            manifest = child / 'manifest.json'
+            if not manifest.exists():
+                errors.append(f'primitives/personalities/{child.name}: missing manifest.json')
+                continue
+            try:
+                data = json.loads(manifest.read_text(encoding='utf-8'))
+            except Exception as exc:
+                errors.append(f'primitives/personalities/{child.name}/manifest.json: invalid JSON: {exc}')
+                continue
+            if data.get('type') != 'personality':
+                errors.append(f'primitives/personalities/{child.name}/manifest.json: type must be personality')
+            if data.get('sanitized') is not True:
+                errors.append(f'primitives/personalities/{child.name}/manifest.json: sanitized must be true')
+            config_file = data.get('config_file')
+            if not config_file or not (child / str(config_file)).exists():
+                errors.append(f'primitives/personalities/{child.name}/manifest.json: missing config_file target')
+            excluded = set(data.get('excluded_categories', []))
+            required = {'env', 'auth', 'tokens', 'memories', 'sessions', 'logs', 'cache', 'state', 'pairing', 'runtime'}
+            if not required.issubset(excluded):
+                errors.append(f'primitives/personalities/{child.name}/manifest.json: missing required excluded categories')
     return errors
 
 def main() -> int:

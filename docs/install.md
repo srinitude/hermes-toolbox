@@ -9,7 +9,26 @@ Run a dry-run first:
 Apply public skills:
 
 ```bash
-./scripts/install-toolbox.sh --apply --target "$HERMES_HOME"
+./scripts/install-toolbox.sh --apply --target "${HERMES_HOME:-$HOME/.hermes}"
+```
+
+Install public custom `/personality` presets, including `validator`:
+
+```bash
+./scripts/install-toolbox.sh --apply --personalities --target "${HERMES_HOME:-$HOME/.hermes}"
+```
+
+Then restart Hermes and run:
+
+```text
+/personality validator
+```
+
+If you explicitly want the validator overlay persisted as the active default,
+install with activation:
+
+```bash
+./scripts/install-toolbox.sh --apply --personalities --activate-validator --target "${HERMES_HOME:-$HOME/.hermes}"
 ```
 
 Sanitized plugin packages require explicit installation with the plugin flag.
