@@ -1,0 +1,21 @@
+name: hermes-cron-automation-lab
+kind: standalone
+version: 0.1.0
+description: Teaches scheduled jobs and automation safely.
+provides_tools:
+- tutorial_validate_cron_prompt
+- tutorial_explain_schedule
+- tutorial_make_safe_cron_example
+provides_commands:
+- cron-lab
+- schedule-practice
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '2'
+provides_skills:
+- automation-safety
+- cron-basics
+- self-contained-cron-prompts

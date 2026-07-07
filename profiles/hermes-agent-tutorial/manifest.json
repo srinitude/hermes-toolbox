@@ -1,0 +1,30 @@
+{
+  "description": "Reusable Hermes tutorial profile package for learning Hermes Agent from setup through mastery.",
+  "excluded_categories": [
+    "env",
+    "auth",
+    "tokens",
+    "memories",
+    "sessions",
+    "logs",
+    "cache",
+    "state",
+    "pairing",
+    "runtime"
+  ],
+  "included_files": [
+    "README.md",
+    "PROFILE.md",
+    "SOUL.md",
+    "config.public.yaml",
+    "distribution.yaml",
+    "manifest.json"
+  ],
+  "package": "hermes-agent-tutorial",
+  "requires_user_action": [
+    "Run official Hermes setup/auth/model flows for credentials.",
+    "Install and enable desired tutorial plugins explicitly."
+  ],
+  "sanitized": true,
+  "type": "profile"
+}

@@ -1,0 +1,10 @@
+{
+  "commands": [
+    "docs-check"
+  ],
+  "tools": [
+    "tutorial_check_docs_link",
+    "tutorial_compare_lesson_to_docs",
+    "tutorial_flag_stale_lesson"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "commands": [
+    "gateway-lab",
+    "bot-safety-check"
+  ],
+  "tools": [
+    "tutorial_explain_gateway_platform",
+    "tutorial_gateway_readiness_check",
+    "tutorial_explain_gateway_error"
+  ]
+}

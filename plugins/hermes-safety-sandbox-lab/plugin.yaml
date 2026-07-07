@@ -1,0 +1,21 @@
+name: hermes-safety-sandbox-lab
+kind: standalone
+version: 0.1.0
+description: Teaches safety, approvals, secrets, filesystem boundaries, and sandboxing.
+provides_tools:
+- classify_hermes_action_risk
+- explain_write_surface
+- suggest_safer_hermes_action
+provides_commands:
+- safety-lab
+- is-this-safe
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '1'
+provides_skills:
+- sandboxing
+- secret-safety
+- write-safety

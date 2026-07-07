@@ -1,0 +1,19 @@
+name: hermes-profile-builder-lab
+kind: standalone
+version: 0.1.0
+description: Teaches users how to design specialized Hermes profiles.
+provides_tools:
+- tutorial_review_profile_spec
+- tutorial_map_goal_to_profile_primitives
+provides_commands:
+- profile-builder-lab
+- design-profile
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '3'
+provides_skills:
+- goal-to-primitives
+- profile-builder-workflow

@@ -1,0 +1,21 @@
+name: hermes-mcp-lab
+kind: standalone
+version: 0.1.0
+description: Teaches MCP as the bridge to external tool ecosystems.
+provides_tools:
+- tutorial_compare_mcp_vs_plugin
+- tutorial_explain_mcp_manifest
+- tutorial_plan_mcp_setup
+provides_commands:
+- mcp-lab
+- mcp-or-plugin
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '3'
+provides_skills:
+- mcp-basics
+- mcp-security
+- mcp-tool-filtering

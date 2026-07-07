@@ -1,0 +1,21 @@
+name: hermes-learning-progress
+kind: standalone
+version: 0.1.0
+description: Tracks learner progress through lessons, quizzes, labs, and capstones.
+provides_tools:
+- tutorial_record_progress
+- tutorial_get_progress
+- tutorial_mark_lesson_complete
+- tutorial_recommend_review
+provides_commands:
+- progress
+- review
+- resume-tutorial
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: review
+provides_skills:
+- progress-tracking-basics

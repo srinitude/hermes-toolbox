@@ -1,0 +1,126 @@
+{
+  "prerequisites": [
+    {
+      "lesson_id": "level-0-hermes-tutorial-compass",
+      "requires": []
+    },
+    {
+      "lesson_id": "level-0-hermes-setup-coach",
+      "requires": []
+    },
+    {
+      "lesson_id": "level-0-hermes-concept-glossary",
+      "requires": []
+    },
+    {
+      "lesson_id": "level-0-hermes-command-lab",
+      "requires": []
+    },
+    {
+      "lesson_id": "level-0-hermes-accessibility-coach",
+      "requires": []
+    },
+    {
+      "lesson_id": "level-1-hermes-tools-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-1-hermes-safety-sandbox-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-1-hermes-config-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-1-hermes-example-gallery",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-2-hermes-skills-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-2-hermes-memory-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-2-hermes-profiles-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-2-hermes-cron-automation-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-2-hermes-gateway-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-3-hermes-mcp-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-3-hermes-troubleshooting-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-3-hermes-prompting-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-3-hermes-profile-builder-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-4-hermes-plugin-builder-lab",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-4-hermes-docs-sync-tutor",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-4-hermes-assessment-certifier",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    },
+    {
+      "lesson_id": "level-4-hermes-capstone-orchestrator",
+      "requires": [
+        "level-0-hermes-tutorial-compass"
+      ]
+    }
+  ]
+}

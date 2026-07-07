@@ -1,0 +1,11 @@
+{
+  "commands": [
+    "cron-lab",
+    "schedule-practice"
+  ],
+  "tools": [
+    "tutorial_validate_cron_prompt",
+    "tutorial_explain_schedule",
+    "tutorial_make_safe_cron_example"
+  ]
+}

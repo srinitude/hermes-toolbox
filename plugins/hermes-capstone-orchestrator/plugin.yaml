@@ -1,0 +1,19 @@
+name: hermes-capstone-orchestrator
+kind: standalone
+version: 0.1.0
+description: Orchestrates mastery projects that combine setup, safety, profiles, skills,
+  plugins, automation, and troubleshooting.
+provides_tools:
+- tutorial_plan_capstone
+- tutorial_review_capstone
+- tutorial_score_mastery
+provides_commands:
+- capstone
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '4'
+provides_skills:
+- mastery-capstones

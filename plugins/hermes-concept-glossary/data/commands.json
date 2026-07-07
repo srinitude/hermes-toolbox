@@ -1,0 +1,8 @@
+{
+  "commands": [
+    "what-is"
+  ],
+  "tools": [
+    "explain_hermes_term"
+  ]
+}

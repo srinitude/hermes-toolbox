@@ -1,0 +1,20 @@
+name: hermes-prompting-lab
+kind: standalone
+version: 0.1.0
+description: Teaches prompt-enhancer discipline and effective agent steering.
+provides_tools:
+- tutorial_score_prompt
+- tutorial_rewrite_prompt
+- tutorial_extract_prompt_scope
+provides_commands:
+- prompt-lab
+- enhance-practice
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '3'
+provides_skills:
+- prompt-enhancer-basics
+- safe-execution-prompts

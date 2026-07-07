@@ -1,0 +1,25 @@
+
+display:
+  personality: validator
+approvals:
+  mode: manual
+terminal:
+  backend: local
+  cwd: "$HOME/hermes-profiles/hermes-agent-tutorial"
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+skills:
+  enabled:
+    - prompt-enhancer
+    - plugin-builder
+    - openrouter-mcp-server
+tutorial:
+  official_docs: "https://hermes-agent.nousresearch.com/docs/"
+  repo: "https://github.com/srinitude/hermes-toolbox"
+  recommended_start:
+    - hermes-tutorial-compass
+    - hermes-concept-glossary
+    - hermes-setup-coach
+    - hermes-command-lab
+    - hermes-accessibility-coach

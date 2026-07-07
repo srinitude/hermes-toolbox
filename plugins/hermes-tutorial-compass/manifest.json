@@ -1,0 +1,40 @@
+{
+  "excluded_categories": [
+    "env",
+    "auth",
+    "tokens",
+    "memories",
+    "sessions",
+    "logs",
+    "cache",
+    "state",
+    "pairing",
+    "runtime"
+  ],
+  "included_files": [
+    "README.md",
+    "__init__.py",
+    "commands.py",
+    "data/commands.json",
+    "data/curriculum.json",
+    "data/curriculum_graph.json",
+    "data/feature_taxonomy.json",
+    "data/lessons.json",
+    "data/plugin.json",
+    "data/prerequisites.json",
+    "data/rubrics.json",
+    "manifest.json",
+    "plugin.yaml",
+    "schemas.py",
+    "skills/advanced-path/SKILL.md",
+    "skills/beginner-path/SKILL.md",
+    "skills/intermediate-path/SKILL.md",
+    "skills/mastery-path/SKILL.md",
+    "tests/test_contract.py",
+    "tools.py"
+  ],
+  "package": "hermes-tutorial-compass",
+  "sanitized": true,
+  "source_gate": "configured-public-plugin-source-profile",
+  "type": "plugin"
+}

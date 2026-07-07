@@ -1,0 +1,9 @@
+[
+  {
+    "body": "Profiles isolate Hermes state, not the operating-system user or filesystem; sandboxing is a separate terminal/backend choice.",
+    "id": "safety-sandbox-intro",
+    "level": "1",
+    "summary": "Profiles isolate Hermes state, not the operating-system user or filesystem; sandboxing is a separate terminal/backend choice.",
+    "title": "Hermes Safety Sandbox Lab"
+  }
+]

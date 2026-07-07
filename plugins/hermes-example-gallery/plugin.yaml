@@ -1,0 +1,22 @@
+name: hermes-example-gallery
+kind: standalone
+version: 0.1.0
+description: Provides copyable examples, templates, and recipes for common Hermes
+  workflows.
+provides_tools:
+- tutorial_find_example
+- tutorial_customize_example
+provides_commands:
+- examples
+- recipe
+requires_env: []
+metadata:
+  hermes:
+    generated_by: plugin-builder
+    public_package: true
+    tutorial_level: '1'
+provides_skills:
+- first-chat-example
+- plugin-spec-example
+- profile-spec-example
+- safe-file-edit-example

@@ -1,0 +1,9 @@
+[
+  {
+    "body": "Use `hermes config` for non-secret settings and setup/auth flows for secrets.",
+    "id": "config-intro",
+    "level": "1",
+    "summary": "Use `hermes config` for non-secret settings and setup/auth flows for secrets.",
+    "title": "Hermes Config Lab"
+  }
+]

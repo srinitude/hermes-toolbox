@@ -1,0 +1,36 @@
+{
+  "assessment_keywords": [
+    "profile",
+    "skill",
+    "plugin",
+    "safety",
+    "validation",
+    "docs"
+  ],
+  "quiz": [
+    {
+      "expected_keywords": [
+        "profile",
+        "sandbox",
+        "filesystem"
+      ],
+      "question": "Why is a Hermes profile not the same as a sandbox?"
+    },
+    {
+      "expected_keywords": [
+        "procedure",
+        "checklist",
+        "static"
+      ],
+      "question": "When should tutorial content be a skill instead of plugin code?"
+    },
+    {
+      "expected_keywords": [
+        "sanitize",
+        "secrets",
+        "runtime"
+      ],
+      "question": "What must you do before publishing a public profile package?"
+    }
+  ]
+}

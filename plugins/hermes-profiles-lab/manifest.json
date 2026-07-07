@@ -1,0 +1,35 @@
+{
+  "excluded_categories": [
+    "env",
+    "auth",
+    "tokens",
+    "memories",
+    "sessions",
+    "logs",
+    "cache",
+    "state",
+    "pairing",
+    "runtime"
+  ],
+  "included_files": [
+    "README.md",
+    "__init__.py",
+    "commands.py",
+    "data/commands.json",
+    "data/lessons.json",
+    "data/plugin.json",
+    "data/rubrics.json",
+    "manifest.json",
+    "plugin.yaml",
+    "schemas.py",
+    "skills/profile-basics/SKILL.md",
+    "skills/profile-builder-basics/SKILL.md",
+    "skills/profile-distribution-basics/SKILL.md",
+    "tests/test_contract.py",
+    "tools.py"
+  ],
+  "package": "hermes-profiles-lab",
+  "sanitized": true,
+  "source_gate": "configured-public-plugin-source-profile",
+  "type": "plugin"
+}
