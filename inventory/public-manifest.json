@@ -13,27 +13,27 @@
   "skills": [
     {
       "path": "skills/autonomous-ai-agents/openrouter-mcp-server/SKILL.md",
-      "sha256": "e6e66db0227c873464b24cd62d2e024482465c8e4db4be7d592fd59b448293c7"
+      "sha256": "b631681aae276ab3b5dbb69631e19fb9a1bd82b086d585f15560d2e504d360c7"
     },
     {
       "path": "skills/hermes-agent/hermes-config-audits/SKILL.md",
-      "sha256": "b5d6f77d43df06fcaca06f59074a61612093f863ecdf7b55ce528ff32063af70"
+      "sha256": "bae123790160adc214cf9a733d0d79e143c148fbeaf4eff53477ccec858fe10b"
     },
     {
       "path": "skills/hermes-agent/honcho-memory-provider/SKILL.md",
-      "sha256": "da3dfa0fbc5249e38ad69b772d8896f64ec98f5a09b7f04defaa76d466635f44"
+      "sha256": "263369e640b5597ad036e45a7366308cfbbeaf2dae872404262533e19be6cde4"
     },
     {
       "path": "skills/hermes-agent/profile-builder/SKILL.md",
-      "sha256": "496c12315a88a455a564fec1cda2c628f8326b16e42e090cc65436edfafc8a56"
+      "sha256": "fc2986ed857aece53a7e7d287a4a0365d4ee3bf138d32cf844da98f5f80b8f0e"
     },
     {
       "path": "skills/software-development/plugin-builder/SKILL.md",
-      "sha256": "d36b1b1bd1b4cd6fee6acd7ce66621c3a343db788db3960ab7908e5f3d89704d"
+      "sha256": "ad5dc71efa7769fefdad5f43647501ea23f68f8a2f5df27b756123250ea4e9fc"
     },
     {
       "path": "skills/software-development/prompt-enhancer/SKILL.md",
-      "sha256": "149ad3618a11bce3f1d2aacb730e599aca64ffe7f25cbf24d2a9b34d34713201"
+      "sha256": "8301ec56a3073bd1af798d44d433c7ea3a57c7ef9d5dae28b3c4e376b9ade3f6"
     }
   ],
   "version": 1

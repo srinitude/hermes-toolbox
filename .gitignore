@@ -55,6 +55,7 @@
 **/private-plugins/**
 
 # Local build/editor state
+.hermes/
 __pycache__/
 *.py[cod]
 .venv/
