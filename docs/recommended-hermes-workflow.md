@@ -20,12 +20,16 @@ prefix and keep workspaces under `~/hermes-profiles/<first-name>/...`.
 
 Reusable role or use-case profiles should use a generic name and keep
 workspaces under `~/hermes-profiles/<role-use-case-category-or-responsibility>`.
-Only reusable profiles may be exported as public packages, and only after
-environment files, auth stores, memory, sessions, logs, caches, state
-databases, pairing state, and runtime data are stripped.
+Only reusable profiles may be exported as public packages, only through an
+explicit allowlist, and only after environment files, auth stores, memory,
+sessions, logs, caches, state databases, pairing state, and runtime data are
+stripped and the sanitized native distribution passes a real
+`hermes profile install` into a disposable home.
 
 ## Plugin layout conventions
 
 Plugins intended for public release should be created inside a configured
-public-plugin-source profile. Public exports must be sanitized, reusable,
-manifest-backed, and free of credentials, runtime data, and private state.
+public-plugin-source profile. Public exports are allowlisted explicitly and
+must be sanitized, reusable, manifest-backed, complete, and free of
+credentials, runtime data, and private state; a candidate that fails any gate
+leaves the existing public package unchanged.

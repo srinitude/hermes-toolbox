@@ -25,6 +25,16 @@ disposable Hermes home with the real `hermes profile install` before it may
 replace its destination; a failing candidate leaves the existing public
 package byte-for-byte unchanged.
 
+## Current inventory
+
+This inventory is currently empty: no current profile candidate passes every
+publication gate, and the previously published tutorial profile package
+failed the hardened gates itself, so it was unpublished rather than patched
+in place. Rejected candidates stay local-only and are not named here.
+Packages reappear in `inventory/public-manifest.json` — and become
+installable with `--profile <name>` — as soon as a current source candidate
+passes all gates.
+
 ## Install
 
 ```bash

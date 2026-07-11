@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Static completeness gate for public toolbox packages: required files,
-resolvable bundled skills, no placeholders or test doubles, hygienic profile
-manifests, and structural limits on every public Python file."""
+"""Completeness gate for public toolbox packages: plugin packages, native
+profile distributions, personality primitives, and skill packages with
+resolvable references, no placeholders or test doubles, and structural
+limits on every public Python file."""
 from __future__ import annotations
 
 import argparse
@@ -15,12 +16,13 @@ SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
 from package_checks import (  # noqa: E402
-    check_package_manifest, check_profile_hygiene, find_placeholders,
+    check_package_manifest, check_repo_personalities, find_placeholders,
 )
+from profile_checks import profile_package_errors  # noqa: E402
+from safety_checks import skill_reference_errors, validate_public_skill  # noqa: E402
 from toolbox_common import check_child_file  # noqa: E402
 
 REQUIRED_PLUGIN_FILES = ('README.md', 'plugin.yaml', '__init__.py', 'manifest.json')
-REQUIRED_PROFILE_FILES = ('README.md', 'distribution.yaml', 'manifest.json')
 
 
 def load_structure_checker():
@@ -70,13 +72,10 @@ def check_plugin_package(pkg: Path, rel: str, repo: Path, structure) -> list[str
     return errors
 
 
-def check_profile_package(pkg: Path, rel: str) -> list[str]:
-    errors = [f'{rel}: missing {name}' for name in REQUIRED_PROFILE_FILES
-              if not (pkg / name).is_file()]
-    errors += check_profile_hygiene(pkg, rel)
-    errors += check_package_manifest(pkg, rel, 'profile')
-    errors += [f'{rel}/{error}' for error in find_placeholders(pkg)]
-    return errors
+def check_skill_package(pkg: Path, rel: str) -> list[str]:
+    text = (pkg / 'SKILL.md').read_text(encoding='utf-8')
+    return (validate_public_skill(f'{rel}/SKILL.md', text)
+            + skill_reference_errors(rel, pkg))
 
 
 def package_dirs(root: Path) -> list[Path]:
@@ -86,13 +85,23 @@ def package_dirs(root: Path) -> list[Path]:
             if child.is_dir() and child.name != '__pycache__']
 
 
+def skill_packages(repo: Path) -> list[Path]:
+    root = repo / 'skills'
+    if not root.is_dir():
+        return []
+    return sorted(md.parent for md in root.rglob('SKILL.md'))
+
+
 def validate(repo: Path) -> list[str]:
     structure = load_structure_checker()
     errors: list[str] = []
     for pkg in package_dirs(repo / 'plugins'):
         errors += check_plugin_package(pkg, f'plugins/{pkg.name}', repo, structure)
     for pkg in package_dirs(repo / 'profiles'):
-        errors += check_profile_package(pkg, f'profiles/{pkg.name}')
+        errors += profile_package_errors(pkg, f'profiles/{pkg.name}')
+    for pkg in skill_packages(repo):
+        errors += check_skill_package(pkg, pkg.relative_to(repo).as_posix())
+    errors += check_repo_personalities(repo)
     return errors
 
 
