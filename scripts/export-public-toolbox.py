@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from batch_transaction import BatchTransaction
 from candidate_policy import (
     PolicyConfig, merged_allowlist, public_skill_rels, stale_destinations,
 )
@@ -65,13 +66,28 @@ def report_retained(repo: Path, cfg: PolicyConfig) -> None:
                   file=sys.stderr)
 
 
-def run_exports(repo: Path, hermes_home: Path, args: argparse.Namespace,
-                cfg: PolicyConfig) -> list[Path]:
-    accepted = export_public_skills(hermes_home, repo, public_skill_rels(repo, args.public_skill),
+def run_exports(repo: Path, hermes_home: Path, skill_rels: list[Path],
+                args: argparse.Namespace, cfg: PolicyConfig) -> list[Path]:
+    accepted = export_public_skills(hermes_home, repo, skill_rels,
                                     args.private_profile_prefix, args.public_plugin_profile)
     accepted += export_selected_plugins(hermes_home, repo, cfg)
     accepted += export_selected_profiles(hermes_home, repo, cfg)
     return accepted
+
+
+def planned_destinations(repo: Path, skill_rels: list[Path], cfg: PolicyConfig) -> list[Path]:
+    return ([repo / 'skills' / rel for rel in skill_rels]
+            + [repo / 'plugins' / name for name in cfg.public_plugins]
+            + [repo / 'profiles' / name for name in cfg.public_profiles])
+
+
+def run_validators(repo: Path) -> None:
+    names = ['validate-public-safety.py', 'validate-identity-neutrality.py',
+             'validate-package-completeness.py']
+    if (repo / 'profiles' / 'hermes-agent-tutorial').is_dir():
+        names.append('validate-tutorial-suite.py')
+    for name in names:
+        subprocess.check_call(['python3', str(repo / 'scripts' / name)], cwd=repo)
 
 
 def main() -> int:
@@ -84,15 +100,16 @@ def main() -> int:
         private_profile_prefix=args.private_profile_prefix or None,
         public_profiles=merged_allowlist(repo, args.public_profile,
                                          'public-profile-allowlist.txt', 'public profile'))
+    skill_rels = public_skill_rels(repo, args.public_skill)
     ensure_local_info(repo, args.private_profile_prefix, args.public_plugin_profile,
                       args.approved_author_line)
-    accepted = run_exports(repo, hermes_home, args, cfg)
+    with BatchTransaction(repo, planned_destinations(repo, skill_rels, cfg)):
+        accepted = run_exports(repo, hermes_home, skill_rels, args, cfg)
+        write_inventory(repo)
+        run_validators(repo)
     report_retained(repo, cfg)
     if args.change_list:
         write_change_list(Path(args.change_list), repo, accepted)
-    write_inventory(repo)
-    subprocess.check_call(['python3', str(repo / 'scripts' / 'validate-public-safety.py')], cwd=repo)
-    subprocess.check_call(['python3', str(repo / 'scripts' / 'validate-identity-neutrality.py')], cwd=repo)
     return 0
 
 

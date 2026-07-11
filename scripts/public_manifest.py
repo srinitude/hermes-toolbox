@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 from toolbox_common import require_child_file, sha, write
@@ -87,11 +88,44 @@ def skip_inventory_file(repo: Path, path: Path) -> bool:
     return '__pycache__' in parts or rel.endswith(('.pyc', '.pyo'))
 
 
+def _tracked_files(repo: Path) -> list[Path] | None:
+    """List files under version control; None when repo is not a git worktree."""
+    try:
+        out = subprocess.check_output(['git', 'ls-files', '--cached', '-z'],
+                                      cwd=repo, text=True, stderr=subprocess.DEVNULL)
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return [repo / rel for rel in out.split('\0') if rel]
+
+
+def _walk_fallback(repo: Path) -> list[Path]:
+    """Non-git fallback: visible files only, keeping caches like .serena out."""
+    return [path for path in sorted(repo.rglob('*')) if path.is_file()
+            and not any(part.startswith('.') for part in path.relative_to(repo).parts)]
+
+
+def _package_roots(repo: Path, manifest: dict) -> list[Path]:
+    roots = [repo / Path(entry['path']).parent for entry in manifest['skills']]
+    for key in ('plugins', 'profiles', 'personalities'):
+        roots.extend(repo / entry['path'] for entry in manifest[key])
+    return roots
+
+
+def fingerprint_files(repo: Path, manifest: dict) -> list[Path]:
+    """Exactly the tracked files plus files under manifest-listed package roots."""
+    files = _tracked_files(repo)
+    if files is None:
+        files = _walk_fallback(repo)
+    for root in _package_roots(repo, manifest):
+        files.extend(path for path in root.rglob('*') if path.is_file())
+    return sorted(set(files))
+
+
 def write_inventory(repo: Path) -> None:
     manifest = build_public_manifest(repo)
     write(repo / 'inventory' / 'public-manifest.json', json.dumps(manifest, indent=2, sort_keys=True) + '\n')
     fingerprints = {}
-    for path in sorted(repo.rglob('*')):
+    for path in fingerprint_files(repo, manifest):
         if skip_inventory_file(repo, path):
             continue
         fingerprints[path.relative_to(repo).as_posix()] = sha(path)

@@ -61,13 +61,14 @@ def make_publisher_repo(base: Path) -> tuple[Path, Path]:
 
 
 def push_baseline(repo: Path, base: Path, home: Path) -> Path:
-    """Export once, commit the result as main, and push it to a local bare origin."""
+    """Export and stage twice so index-based fingerprints converge, then push as main."""
     bare = base / 'origin.git'
     subprocess.run(['git', 'init', '-q', '--bare', str(bare)], check=True)
     git_in(repo, 'remote', 'add', 'origin', str(bare))
-    result = run_exporter(repo, home, *PROFILE_ARGS)
-    assert result.returncode == 0, result.stderr
-    git_in(repo, 'add', '-A')
+    for _ in range(2):
+        result = run_exporter(repo, home, *PROFILE_ARGS)
+        assert result.returncode == 0, result.stderr
+        git_in(repo, 'add', '-A')
     git_in(repo, 'commit', '-q', '-m', 'baseline public artifacts')
     git_in(repo, 'push', '-q', '-u', 'origin', 'main')
     return bare
