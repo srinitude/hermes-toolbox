@@ -115,6 +115,25 @@ These commands do not require a chat/model call. `skills list` may create bookke
 - Independently verify every `distribution_owned` path. Some releases parse and serialize that field without using it to constrain the copy implementation.
 - Inspect the source package and installed tree separately: source privacy rules and installed runtime-provenance expectations differ.
 
+## Documentary classification of live profile distributions
+
+When the user requires a literal no-write audit of live profile candidates, do not stage packages or invoke `hermes profile install`, even in a temporary home. Classify in two layers:
+
+1. **Static package decision** — accepted/rejected from source, exporter, sanitizer, and validator contracts.
+2. **Runtime proof state** — observed, not run, or blocked by the read-only boundary. A deterministic static rejection remains `rejected`, not `blocked`, merely because the real install probe was prohibited.
+
+Use an in-memory simulation with `PYTHONDONTWRITEBYTECODE=1` when needed: parse `distribution.yaml`, enumerate only `distribution_owned`, apply the exact text sanitizer in memory, and run equivalent regex/AST checks without writing staging files. Record the sanitizer inputs and cite both the surviving candidate line and the validator line that rejects it. Recheck a deterministic digest over the owned payload, not the whole live profile: runtime logs and databases can drift while reusable source remains quiescent.
+
+Audit dependency closure explicitly:
+
+- Compare retained config sections with what the exporter drops. A reusable-config allowlist can preserve `plugins` while silently dropping `mcp_servers`, leaving an installable but behaviorally incomplete profile.
+- Treat enabled plugin names as dependencies even when `plugins/` is not distribution-owned. State separately whether the profile survives zero newly accepted plugins, zero plugin availability, or retained last-known-good plugins.
+- Count and inspect the entire owned skills tree. `distribution_owned: skills` may package a copied hub/bundled library containing unrelated binaries, test fixtures, absolute temporary paths, placeholder-token false positives, or secret-shaped examples.
+- Inspect native copying separately from manifest semantics. Some releases parse and serialize `distribution_owned` but copy every top-level package entry except a hard exclusion set. Successful installation then proves neither ownership enforcement nor package-policy compliance.
+- Verify candidate-specific plan proof, not only generic fixtures. An exporter that runs only `profile install` does not satisfy a requirement to inspect `profile info`, `config check`, and enabled skills for every accepted real candidate.
+
+For existing public legacy profiles, audit the exact committed object when concurrent publisher work removes or rewrites worktree files. Compare legacy names such as `config.public.yaml`, custom `files` lists, or self-inclusive manifests against the new native contract rather than accepting them because a permissive native installer copies them. Keep `retained-last-known-good` distinct from `accepted-current`; a validator that still expects the legacy shape is evidence of contract drift, not proof of the new shape.
+
 ## Literal read-only audits
 
-Do not execute these probes when the user requested a documentary/source-only audit. Report the exact future command shapes instead. Avoid web extractors that persist large-page caches under a literal zero-write constraint; use browser DOM inspection or tightly bounded streamed reads. If a managed tool refreshes a cache anyway, disclose the exact paths and do not claim global zero writes.
+Do not execute these probes when the user requested a documentary/source-only audit. Report the exact future command shapes instead. Avoid web extractors and broad file inventories that can exceed the tool-output budget and persist a result spool. Prefer narrowly scoped filename searches, bounded content searches, and compact in-memory summaries. If a managed tool refreshes or spools a cache anyway, disclose the exact path and size, do not delete it without permission, and do not claim global zero writes.
