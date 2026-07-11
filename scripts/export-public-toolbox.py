@@ -83,9 +83,7 @@ def planned_destinations(repo: Path, skill_rels: list[Path], cfg: PolicyConfig) 
 
 def run_validators(repo: Path) -> None:
     names = ['validate-public-safety.py', 'validate-identity-neutrality.py',
-             'validate-package-completeness.py']
-    if (repo / 'profiles' / 'hermes-agent-tutorial').is_dir():
-        names.append('validate-tutorial-suite.py')
+             'validate-package-completeness.py', 'validate-tutorial-suite.py']
     for name in names:
         subprocess.check_call(['python3', str(repo / 'scripts' / name)], cwd=repo)
 
