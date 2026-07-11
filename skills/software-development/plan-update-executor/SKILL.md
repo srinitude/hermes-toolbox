@@ -74,9 +74,12 @@ First use the `prompt-enhancer` discipline internally: make the objective, allow
 - Do not return a changelog when the user asked for a full reconciled artifact.
 - Do not let "validate with web tooling" become generic filler. Name which claims need web validation and which first-party sources count.
 - Do not loosen approval, payment, credential, privacy, publishing, or external side-effect gates while reconciling a plan.
+- For long-running public-repository plans, do not treat per-package atomicity as whole-batch atomicity, fingerprint an unrestricted filesystem walk, or trust a candidate report without validating its path contract and manifest agreement.
+- Do not claim completion at local-green state when the plan requires PR checks, merge, remote-state verification, original-checkout reconciliation, or an explicit publisher-state decision.
 - Do not write outside the target plan, workspace `.hermes/plans/`, or explicitly approved output path.
 
 ## References
+- `references/drift-safe-public-repository-execution.md` — execute mutable-source public-repository plans with candidate drift ledgers, whole-batch rollback, strict fingerprint scope, privacy review, idempotence, disposable installation, and remote reconciliation gates.
 - `references/authenticated-sources-and-skill-catalog-drift.md` — reconcile private dashboard access, catalog/repository drift, capability coverage, and recording-backed workflow allowlists without inventing remote state.
 - `references/large-plan-live-state-reconciliation.md` — reconcile canonical artifacts with newer live state, preserve stricter operational gates, and validate large plans against canonical raw bytes.
 - `references/read-only-plan-gate-audits.md` — audit numbered implementation tasks and cutover gates without writes; separate committed, concurrent-worktree, and live-runtime evidence; produce exact artifact/test and approval matrices.

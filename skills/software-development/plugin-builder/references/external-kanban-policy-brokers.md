@@ -66,6 +66,18 @@ To preserve native `HERMES_KANBAN_TASK`, KANBAN_GUIDANCE, and `kanban_*` schemas
 
 Tool override is a high-trust exception. Verify real registry handler ownership, standard agent dispatch, and alternative transports such as the Codex app-server MCP bridge. Normal profiles should keep override disabled.
 
+### Installed-plugin verification gate
+
+Source-tree imports are insufficient evidence for an override plugin. Build and install the wheel into a fresh environment, then prove:
+
+1. The wheel contains the plugin manifest plus every immutable compatibility contract/operation ledger needed at runtime. Repository-root `data/` paths commonly disappear after installation; package them explicitly and resolve source-tree versus installed-package locations without duplicating authoritative tracked content.
+2. A fresh real `PluginManager` process with native tools registered and `allow_tool_override: false` leaves every native handler owned by the native module and records the plugin load failure/disable state.
+3. A separate fresh process with explicit `allow_tool_override: true` loads successfully and reports plugin ownership for the complete exact tool set, byte/structure-equivalent schemas, and the original toolset namespace.
+4. The probe runs with the installed wheel and pinned Hermes only—no broker source checkout on `PYTHONPATH`—so editable imports cannot mask missing package data.
+5. Unrelated optional bundled-plugin dependency warnings are classified separately; the target plugin’s enabled/error state and registry ownership decide this gate.
+
+If any required contract file, manifest, handler, schema, or ownership assertion fails, remain in `compatibility_hold`; do not install the consumer plugin or claim wheel readiness.
+
 ## Approval and capability contracts
 
 - Human approval tokens bind canonical profile, board, Project reference, task, operation, normalized arguments, policy version, actor, and expiry.
