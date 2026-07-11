@@ -71,7 +71,7 @@ def plugin_package_manifest(dst: Path, name: str) -> str:
     }, indent=2, sort_keys=True) + '\n'
 
 
-def _staged_text_errors(staging: Path) -> list[str]:
+def staged_text_errors(staging: Path) -> list[str]:
     errors = []
     for path in sorted(p for p in staging.rglob('*') if p.is_file()):
         rel = path.relative_to(staging).as_posix()
@@ -104,7 +104,7 @@ def _manifest_errors(staging: Path, name: str) -> list[str]:
 def _plugin_staging_errors(staging: Path, name: str) -> list[str]:
     missing = [f'{name}: staged package is missing required file {fname}'
                for fname in REQUIRED_PLUGIN_FILES if not (staging / fname).is_file()]
-    return missing or _manifest_errors(staging, name) + _staged_text_errors(staging)
+    return missing or _manifest_errors(staging, name) + staged_text_errors(staging)
 
 
 def _skill_staging_errors(staging: Path, rel: Path) -> list[str]:
@@ -113,7 +113,7 @@ def _skill_staging_errors(staging: Path, rel: Path) -> list[str]:
         return [f'{rel}: staged skill is missing SKILL.md']
     errors = validate_public_skill((Path('skills') / rel / 'SKILL.md').as_posix(),
                                    skill_md.read_text(encoding='utf-8'))
-    return errors + _staged_text_errors(staging)
+    return errors + staged_text_errors(staging)
 
 
 def _replace_package(staging: Path, destination: Path) -> None:

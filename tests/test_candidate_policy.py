@@ -14,7 +14,7 @@ add_scripts_path()
 
 from candidate_policy import (  # noqa: E402
     PolicyConfig, decide_plugin, plugin_candidate, read_allowlist,
-    stale_plugin_destinations,
+    stale_destinations,
 )
 from export_transaction import plugin_package_manifest  # noqa: E402
 
@@ -101,7 +101,7 @@ class AllowlistInputTests(PolicyCase):
     def test_stale_unallowlisted_destination_is_reported(self):
         (self.repo / 'plugins' / 'kept').mkdir()
         (self.repo / 'plugins' / 'stale').mkdir()
-        self.assertEqual(stale_plugin_destinations(self.repo, ('kept',)), ['stale'])
+        self.assertEqual(stale_destinations(self.repo, 'plugins', ('kept',)), ['stale'])
 
 
 class ExporterCase(unittest.TestCase):

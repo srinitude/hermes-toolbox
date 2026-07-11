@@ -140,7 +140,7 @@ def find_placeholders(pkg_dir: Path) -> list[str]:
 
 
 def check_profile_hygiene(profile_dir: Path, rel: str) -> list[str]:
-    """Reject runtime provenance fields and absolute paths in profile manifests."""
+    """Reject runtime provenance fields and absolute paths anywhere in the package."""
     manifest = profile_dir / 'distribution.yaml'
     if not manifest.is_file():
         return [f'{rel}: missing distribution.yaml']
@@ -152,10 +152,12 @@ def check_profile_hygiene(profile_dir: Path, rel: str) -> list[str]:
         return [f'{rel}/distribution.yaml: manifest must be a mapping']
     errors = [f'{rel}/distribution.yaml: forbidden runtime field {key!r}'
               for key in FORBIDDEN_PROFILE_KEYS if key in data]
-    for path in sorted({manifest, *profile_dir.glob('config*.yaml')}):
-        for lineno, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+    for path in sorted(p for p in profile_dir.rglob('*') if p.is_file()):
+        text = read_text_or_skip(path)
+        pkg_rel = path.relative_to(profile_dir).as_posix()
+        for lineno, line in enumerate((text or '').splitlines(), 1):
             if ABSOLUTE_PATH_RE.search(line):
-                errors.append(f'{rel}/{path.name}:{lineno}: absolute path: {line.strip()}')
+                errors.append(f'{rel}/{pkg_rel}:{lineno}: absolute path: {line.strip()}')
     return errors
 
 

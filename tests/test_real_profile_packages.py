@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.support import REPO, add_scripts_path
+from tests.support import REPO, add_scripts_path, profile_export_sources, run_exporter
 
 add_scripts_path()
 
@@ -14,6 +14,7 @@ from real_runtime import install_profile, run_hermes  # noqa: E402
 
 TUTORIAL_PACKAGE = REPO / 'profiles' / 'hermes-agent-tutorial'
 PROFILE_NAME = 'tutorial-under-test'
+EXPORTED_NAME = 'exported-under-test'
 
 
 class InstalledProfileCase(unittest.TestCase):
@@ -51,6 +52,43 @@ class InstalledProfileCommandTests(InstalledProfileCase):
 
     def test_profile_skills_list_runs(self):
         result = run_hermes(self.home, '-p', PROFILE_NAME,
+                            'skills', 'list', '--enabled-only')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class ExportedProfileCase(unittest.TestCase):
+    home: Path
+
+    @classmethod
+    def setUpClass(cls):
+        base = Path(tempfile.mkdtemp(prefix='profile-exported-'))
+        cls.addClassCleanup(shutil.rmtree, base, True)
+        repo, source_home = profile_export_sources(base)
+        result = run_exporter(repo, source_home, '--public-skill', 'fixtures/complete-skill',
+                              '--public-profile', 'pub-demo')
+        if result.returncode != 0:
+            raise AssertionError(result.stdout + result.stderr)
+        cls.home = base / 'install-home'
+        cls.home.mkdir()
+        cls.install = install_profile(cls.home, repo / 'profiles' / 'pub-demo', EXPORTED_NAME)
+
+
+class ExportedProfileInstallTests(ExportedProfileCase):
+    def test_exported_package_installs_into_a_temporary_home(self):
+        self.assertEqual(self.install.returncode, 0,
+                         self.install.stdout + self.install.stderr)
+
+    def test_profile_info_reports_exported_package(self):
+        result = run_hermes(self.home, 'profile', 'info', EXPORTED_NAME)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(EXPORTED_NAME, result.stdout)
+
+    def test_profile_config_check_passes(self):
+        result = run_hermes(self.home, '-p', EXPORTED_NAME, 'config', 'check')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_enabled_only_skills_listing_runs(self):
+        result = run_hermes(self.home, '-p', EXPORTED_NAME,
                             'skills', 'list', '--enabled-only')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

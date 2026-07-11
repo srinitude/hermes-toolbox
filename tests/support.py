@@ -50,6 +50,42 @@ def _rename_plugin(plugin_dir: Path, name: str) -> None:
                         encoding='utf-8')
 
 
+PROVENANCE = ("source: /tmp/hermes-dist-stage/extracted/demo\n"
+              "installed_at: '2026-07-11T08:19:57+00:00'\n")
+
+
+def add_profile(home: Path, name: str = 'pub-demo') -> Path:
+    """Copy the complete-profile fixture into home as a live installed profile."""
+    profile = home / 'profiles' / name
+    shutil.copytree(FIXTURES / 'complete-profile', profile)
+    manifest = profile / 'distribution.yaml'
+    text = manifest.read_text(encoding='utf-8')
+    manifest.write_text(text.replace('name: complete-profile', f'name: {name}', 1)
+                        + PROVENANCE, encoding='utf-8')
+    _add_runtime_state(profile)
+    return profile
+
+
+def _add_runtime_state(profile: Path) -> None:
+    (profile / '.env').write_text('DEMO_SERVICE_URL=http://127.0.0.1:9\n', encoding='utf-8')
+    (profile / 'auth.json').write_text('{}\n', encoding='utf-8')
+    (profile / 'state.db').write_bytes(b'\x00runtime-state\x00')
+    for rel in ['memories/notes.md', 'sessions/last-session.json', 'logs/run.log',
+                'cache/blob.txt', 'cron/outputs/last-run.txt']:
+        path = profile / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('runtime state that must never be exported\n', encoding='utf-8')
+
+
+def profile_export_sources(base: Path, name: str = 'pub-demo') -> tuple[Path, Path]:
+    """Build a repo plus a Hermes home carrying one exportable profile fixture."""
+    repo = make_repo(base)
+    home = make_home(base)
+    shutil.copytree(FIXTURES / 'complete-skill', home / 'skills' / 'fixtures' / 'complete-skill')
+    add_profile(home, name)
+    return repo, home
+
+
 def clean_env() -> dict[str, str]:
     env = dict(os.environ)
     env['PYTHONDONTWRITEBYTECODE'] = '1'

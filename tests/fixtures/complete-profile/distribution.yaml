@@ -1,0 +1,16 @@
+name: complete-profile
+version: 1.0.0
+description: Fixture profile distribution proving the native public package shape.
+hermes_requires: '>=0.12.0'
+author: demo-workflow
+license: MIT
+env_requires:
+- name: DEMO_SERVICE_URL
+  description: Optional endpoint override used by the demo guide walkthrough.
+  required: false
+  default: ''
+distribution_owned:
+- SOUL.md
+- config.yaml
+- skills
+- README.md

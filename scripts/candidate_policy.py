@@ -39,6 +39,7 @@ class PolicyConfig:
     public_plugins: tuple[str, ...]
     public_plugin_profile: str | None
     private_profile_prefix: str | None
+    public_profiles: tuple[str, ...] = ()
 
 
 def _check_entry(entry: str, label: str) -> None:
@@ -109,8 +110,37 @@ def decide_plugin(candidate: Candidate, cfg: PolicyConfig) -> Decision:
     return Decision(accepted=not reasons, reasons=tuple(reasons))
 
 
-def stale_plugin_destinations(repo: Path, allowed: tuple[str, ...]) -> list[str]:
-    root = repo / 'plugins'
+def profile_candidate(hermes_home: Path, repo: Path, name: str) -> Candidate:
+    return Candidate(kind='profile', name=name, source=hermes_home / 'profiles' / name,
+                     destination=repo / 'profiles' / name, source_profile=None)
+
+
+def _profile_reasons(candidate: Candidate, cfg: PolicyConfig) -> list[str]:
+    reasons = []
+    if candidate.name not in cfg.public_profiles:
+        reasons.append('profile is not in the explicit public profile allowlist')
+    if cfg.private_profile_prefix and candidate.name.startswith(cfg.private_profile_prefix):
+        reasons.append('profile name carries the private prefix')
+    if len(Path(candidate.name).parts) != 1 or candidate.name in {'.', '..'}:
+        reasons.append('profile name must be a single safe path segment')
+    return reasons + _profile_source_reasons(candidate, cfg)
+
+
+def _profile_source_reasons(candidate: Candidate, cfg: PolicyConfig) -> list[str]:
+    if candidate.name in {'default', cfg.public_plugin_profile or ''}:
+        return ['profile is the default or plugin source profile, not a reusable distribution']
+    if not (candidate.source / 'distribution.yaml').is_file():
+        return ['profile source has no reusable distribution manifest (distribution.yaml)']
+    return []
+
+
+def decide_profile(candidate: Candidate, cfg: PolicyConfig) -> Decision:
+    reasons = _profile_reasons(candidate, cfg)
+    return Decision(accepted=not reasons, reasons=tuple(reasons))
+
+
+def stale_destinations(repo: Path, root_name: str, allowed: tuple[str, ...]) -> list[str]:
+    root = repo / root_name
     if not root.exists():
         return []
     return sorted(child.name for child in root.iterdir()

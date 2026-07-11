@@ -11,11 +11,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from candidate_policy import (
-    PolicyConfig, merged_allowlist, public_skill_rels, stale_plugin_destinations,
+    PolicyConfig, merged_allowlist, public_skill_rels, stale_destinations,
 )
 from export_transaction import (
     export_public_skills, export_selected_plugins, write_change_list,
 )
+from profile_export import export_selected_profiles
 from public_manifest import write_inventory
 from toolbox_common import git_info_dir, write
 
@@ -42,6 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--approved-author-line', default=os.environ.get('HERMES_TOOLBOX_APPROVED_AUTHOR_LINE', ''))
     parser.add_argument('--public-skill', action='append', default=[], help='Relative skill path under $HERMES_HOME/skills to publish. Repeatable. Defaults to the repo allowlist.')
     parser.add_argument('--public-plugin', action='append', default=[], help='Plugin name from the public plugin source profile to publish. Repeatable. Merged with the local plugin allowlist.')
+    parser.add_argument('--public-profile', action='append', default=[], help='Profile distribution name under $HERMES_HOME/profiles to publish. Repeatable. Merged with the local profile allowlist.')
     parser.add_argument('--change-list', default='', help='Write accepted repo-relative destinations to this file, NUL-delimited.')
     return parser.parse_args()
 
@@ -53,23 +55,39 @@ def selected_plugin_names(repo: Path, args: argparse.Namespace) -> tuple[str, ..
     return names
 
 
+def report_retained(repo: Path, cfg: PolicyConfig) -> None:
+    selections = [('plugins', 'plugin', cfg.public_plugins),
+                  ('profiles', 'profile', cfg.public_profiles)]
+    for root_name, label, allowed in selections:
+        stale = stale_destinations(repo, root_name, allowed)
+        if stale:
+            print(f'retaining existing unallowlisted {label} packages: ' + ', '.join(stale),
+                  file=sys.stderr)
+
+
+def run_exports(repo: Path, hermes_home: Path, args: argparse.Namespace,
+                cfg: PolicyConfig) -> list[Path]:
+    accepted = export_public_skills(hermes_home, repo, public_skill_rels(repo, args.public_skill),
+                                    args.private_profile_prefix, args.public_plugin_profile)
+    accepted += export_selected_plugins(hermes_home, repo, cfg)
+    accepted += export_selected_profiles(hermes_home, repo, cfg)
+    return accepted
+
+
 def main() -> int:
     args = parse_args()
     repo = Path(args.repo).resolve()
     hermes_home = Path(args.hermes_home).resolve()
-    plugin_names = selected_plugin_names(repo, args)
+    cfg = PolicyConfig(
+        public_plugins=selected_plugin_names(repo, args),
+        public_plugin_profile=args.public_plugin_profile or None,
+        private_profile_prefix=args.private_profile_prefix or None,
+        public_profiles=merged_allowlist(repo, args.public_profile,
+                                         'public-profile-allowlist.txt', 'public profile'))
     ensure_local_info(repo, args.private_profile_prefix, args.public_plugin_profile,
                       args.approved_author_line)
-    accepted = export_public_skills(hermes_home, repo, public_skill_rels(repo, args.public_skill),
-                                    args.private_profile_prefix, args.public_plugin_profile)
-    cfg = PolicyConfig(public_plugins=plugin_names,
-                       public_plugin_profile=args.public_plugin_profile or None,
-                       private_profile_prefix=args.private_profile_prefix or None)
-    accepted += export_selected_plugins(hermes_home, repo, cfg)
-    stale = stale_plugin_destinations(repo, plugin_names)
-    if stale:
-        print('retaining existing unallowlisted plugin packages: ' + ', '.join(stale),
-              file=sys.stderr)
+    accepted = run_exports(repo, hermes_home, args, cfg)
+    report_retained(repo, cfg)
     if args.change_list:
         write_change_list(Path(args.change_list), repo, accepted)
     write_inventory(repo)

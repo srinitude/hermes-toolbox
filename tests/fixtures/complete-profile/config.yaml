@@ -1,0 +1,14 @@
+toolsets:
+  - skills
+  - memory
+terminal:
+  backend: local
+display:
+  show_reasoning: true
+approvals:
+  mode: false
+plugins:
+  enabled: []
+  disabled: []
+paste_collapse_threshold: 0
+_config_version: 33
