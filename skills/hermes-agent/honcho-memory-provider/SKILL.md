@@ -88,6 +88,10 @@ Important nuance:
 - New profiles created with `--clone` or `--clone-all` inherit Honcho configuration and get a dedicated Honcho host/AI peer.
 - Plain blank profiles created with `hermes profile create NAME` are not automatically hard-enforced by ordinary user-local config. If the user wants all future blank profiles to use Honcho, clarify whether they want managed scope, source-code changes, or a wrapper/procedure.
 
+## Kanban Workflow Memory Isolation
+
+When configuring Honcho for Hermes Kanban, multi-profile worker lanes, phase-gated workflows, or long-running work runs, load `references/kanban-workflow-memory-isolation.md`. Keep the Kanban board as the operational source of truth; use Honcho for profile-aware user/AI peer context, durable preferences, and bounded cross-session continuity. Preserve one AI peer per profile by default, consider stricter workspace/user/AI peer isolation for sensitive workflows, and validate with `hermes honcho status --all` plus `hermes honcho peers`.
+
 ## Validation Checklist
 
 A Honcho setup is complete only when:

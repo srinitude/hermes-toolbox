@@ -1,37 +1,57 @@
-
 # Hermes Toolbox
 
-Public, reusable building blocks for Hermes Agent users: skills, scripts, sanitized profile packages, sanitized plugin packages, validation checks, installable primitives, and documented operating patterns.
+Public, reusable building blocks for Hermes Agent users: validated skills, the
+`validator` custom `/personality` preset, public validation scripts, and
+documented operating patterns. `inventory/public-manifest.json` is the source
+of truth for what is published; the documentation and installer are tested
+against it.
 
 Repository: https://github.com/srinitude/hermes-toolbox/
 
-## What is included
+Compatible Hermes release: `hermes-agent` 0.18.2 (release `v2026.7.7.2`).
 
-- Public-safe skills under `skills/`.
-- Sanitized reusable profile packages under `profiles/`.
-- Sanitized reusable plugin packages under `plugins/`.
-- Public validation scripts under `scripts/`.
-- Deterministic workflow documentation and installable primitives under `docs/` and `primitives/`.
-- The `validator` custom `/personality` preset under `primitives/personalities/validator/`.
-- A guided Hermes tutorial profile package and tutorial plugin suite for learning Hermes Agent from setup through mastery.
+## Current public manifest
 
-## Recommended Hermes workflow
+- Skills: 9
+- Plugin packages: 0
+- Profile packages: 0
+- Personality presets: 1
 
-1. Start each session with `/personality validator`.
-2. Run user requests through `/prompt-enhancer [prompt]` before execution.
-3. Use `/profile-builder [goal]` for separate role, use-case, category, or responsibility profiles.
-4. Use `/plugin-builder [goal]` when a reusable integration or automation surface needs a plugin.
-5. Validate outputs against explicit source-of-truth checks before handoff.
+Skills under `skills/`:
+
+- `autonomous-ai-agents/openrouter-mcp-server`
+- `hermes-agent/hermes-config-audits`
+- `hermes-agent/honcho-memory-provider`
+- `hermes-agent/profile-builder`
+- `research/first-party-integration-audits`
+- `software-development/goal-prompt`
+- `software-development/plan-update-executor`
+- `software-development/plugin-builder`
+- `software-development/prompt-enhancer`
+
+Personality presets under `primitives/personalities/`:
+
+- `validator` — a validation-focused `/personality` overlay, installed as a
+  config snippet and never activated implicitly.
+
+### Why the plugin and profile inventories are empty
+
+Publication is fail-closed. A package is published only while its current
+source passes every provenance, privacy, completeness, real-runtime, and
+structural gate; a newer-but-failing candidate never replaces a
+last-known-good public package. The previously published tutorial plugin
+suite and tutorial profile package failed the hardened completeness gates
+themselves, so they were unpublished rather than patched in place, and no
+current plugin or profile candidate has passed every gate yet. Rejected
+candidates stay local-only and are not named here. The `--plugin` and
+`--profile` installer flags become usable again as soon as the manifest
+lists packages.
 
 ## Installation
 
-### Prerequisites
-
-- Hermes Agent installed and working: `hermes --version`.
-- Git installed.
-- A target Hermes home or profile selected. By default, commands below use `${HERMES_HOME:-$HOME/.hermes}`.
-
-### Dry-run the installer
+The installer is manifest-driven and dry-run by default: without `--apply` it
+prints the exact proposed destinations and writes nothing, and with no
+selection it lists the installable packages and exits.
 
 ```bash
 git clone https://github.com/srinitude/hermes-toolbox.git "$HOME/hermes-toolbox"
@@ -39,143 +59,112 @@ cd "$HOME/hermes-toolbox"
 ./scripts/install-toolbox.sh
 ```
 
-### Install skills, plugins, and the validator personality
+Install skills explicitly — a repeatable `--skill <category/name>` flag, or
+`--all-skills` for every manifest-listed skill:
 
 ```bash
-cd "$HOME/hermes-toolbox"
-./scripts/install-toolbox.sh --apply --plugins --personalities --activate-validator --target "${HERMES_HOME:-$HOME/.hermes}"
+./scripts/install-toolbox.sh --apply --all-skills --target "${HERMES_HOME:-$HOME/.hermes}"
+./scripts/install-toolbox.sh --apply --skill software-development/prompt-enhancer
 ```
 
-What this does:
-
-- Copies public skills into the target Hermes home.
-- Copies sanitized plugin packages into the target Hermes home when `--plugins` is supplied.
-- Installs the public `validator` personality preset when `--personalities` is supplied.
-- Activates the `validator` personality when `--activate-validator` is supplied.
-- Does not copy credentials, memories, sessions, logs, caches, state databases, pairing state, or runtime progress.
-
-Plugin installation is explicit. After copying plugins, enable only the plugins you want in the target Hermes profile:
+Install the validator personality preset without activating it, then use it
+per session:
 
 ```bash
-hermes plugins list
-hermes plugins enable hermes-tutorial-compass
-hermes plugins enable hermes-concept-glossary
+./scripts/install-toolbox.sh --apply --personalities --target "${HERMES_HOME:-$HOME/.hermes}"
 ```
-
-To enable every sanitized plugin package after review:
-
-```bash
-for plugin_path in "$HOME/hermes-toolbox/plugins"/*; do
-  [ -d "$plugin_path" ] || continue
-  hermes plugins enable "$(basename "$plugin_path")"
-done
-hermes plugins list
-```
-
-Profile packages under `profiles/` are public-safe distribution material, not raw live profile copies. Review their `README.md`, `PROFILE.md`, `SOUL.md`, `config.public.yaml`, `distribution.yaml`, and `manifest.json` before adapting them into a live profile.
-
-## Comprehensive Hermes Agent install prompt
-
-Give this prompt to a Hermes Agent instance when you want it to install and validate the entire toolbox for you:
-
-```markdown
-You are Hermes Agent operating in execute mode.
-
-## Objective
-Install and validate the full public Hermes Toolbox from https://github.com/srinitude/hermes-toolbox/ into the target Hermes home or profile, including public skills, sanitized plugin packages, public personality primitives, and profile package documentation.
-
-## Context
-- Repository: https://github.com/srinitude/hermes-toolbox/
-- Target: use `${HERMES_HOME:-$HOME/.hermes}` unless I specify a named profile or a different target path.
-- Continue any existing installation work in this session; do not start over unless I explicitly ask.
-- Treat public profile packages as sanitized templates, not as raw live profile state.
-
-## Scope
-Allowed actions:
-- Clone or update the repository under `$HOME/hermes-toolbox`.
-- Run repository validators before installing.
-- Run `./scripts/install-toolbox.sh --apply --plugins --personalities --activate-validator --target "${HERMES_HOME:-$HOME/.hermes}"` after validation.
-- Enable sanitized plugins only after listing them and confirming they are from this repository.
-- Run Hermes CLI checks that prove skills, plugins, and the validator personality are available.
-
-Not in scope:
-- Reading or printing secrets.
-- Copying private memory, sessions, logs, caches, state databases, pairing state, backups, or runtime progress.
-- Editing Hermes Agent source code.
-- Installing untrusted project-local plugins outside this repository.
-
-## Write Safety
-Allowed write surfaces:
-- `$HOME/hermes-toolbox/` for the repository checkout.
-- `${HERMES_HOME:-$HOME/.hermes}/skills/` for public skills.
-- `${HERMES_HOME:-$HOME/.hermes}/plugins/` for sanitized plugin packages.
-- `${HERMES_HOME:-$HOME/.hermes}/config.yaml` via `hermes config` for the validator personality.
-
-Prohibited or clarification-required write surfaces:
-- Credential and token stores such as `.env`, `auth.json`, OAuth files, and `mcp-tokens/` unless an official setup/auth command asks me to complete user-controlled setup.
-- Runtime stores such as `sessions/`, `logs/`, `cache/`, `state.db*`, `pairing/`, checkpoints, backups, and runtime progress files.
-- Another named profile's `skills/`, `plugins/`, `cron/`, or `memories/` unless I explicitly target that profile.
-- Hermes Agent core source files.
-
-## Source-of-Truth Checks
-- Use `https://hermes-agent.nousresearch.com/docs/` for current Hermes behavior.
-- Use live CLI output from `hermes --help`, `hermes skills list`, `hermes plugins list`, and `hermes config check`.
-- Use this repository's validators: `scripts/validate-public-safety.py`, `scripts/validate-identity-neutrality.py`, and any package-specific validators.
-
-## Execution Rules
-- Convert unknowns into safe assumptions unless they change the target path, profile, credentials, or write safety.
-- Do not fabricate outputs.
-- If validation fails, fix only within the repository or report the blocker.
-- Stop once the validation threshold is met.
-
-## Validation Threshold
-The installation is complete only when:
-1. The repository is cloned or updated from https://github.com/srinitude/hermes-toolbox/.
-2. Public-safety and identity-neutrality validators pass before installation.
-3. The installer finishes successfully with skills, plugins, and validator personality requested.
-4. `hermes skills list` shows installed toolbox skills.
-5. `hermes plugins list` shows copied and enabled plugins selected for this target.
-6. `hermes config check` reports no required missing configuration for normal chat use, or any missing user-controlled credentials are listed as blockers.
-
-## Required Output
-Return the commands run, the final target path/profile, enabled plugins, validator output, and any blockers that require user action.
-```
-
-## Tutorial quick start
-
-After installing and enabling the tutorial plugins:
 
 ```text
 /personality validator
-/tutorial map
-/what-is profile
-/setup-coach
 ```
 
-The tutorial suite is intentionally public-safe. It teaches concepts, procedures, and validation patterns without shipping credentials or private runtime state.
+Activation is a separate, explicit step. `--activate-validator` (which
+implies `--personalities`) also persists the overlay as the active default:
+
+```bash
+./scripts/install-toolbox.sh --apply --personalities --activate-validator --target "${HERMES_HOME:-$HOME/.hermes}"
+```
+
+`--plugin <name>` and `--profile <name>` are repeatable flags that accept only
+manifest-listed packages; profiles install through the real
+`hermes profile install`. Both inventories are currently empty, so the
+installer rejects any plugin or profile selection. There is no broad
+plugin flag and no enable-everything step.
+
+See `docs/install.md` for the full flag reference.
+
+## Hermes Agent install prompt
+
+Give this prompt to a Hermes Agent instance to install the toolbox for you:
+
+```markdown
+Install the public Hermes Toolbox from https://github.com/srinitude/hermes-toolbox/
+into `${HERMES_HOME:-$HOME/.hermes}` unless I name a different target.
+
+1. Clone or update the repository under `$HOME/hermes-toolbox`.
+2. Run `python3 scripts/validate-public-safety.py`,
+   `python3 scripts/validate-identity-neutrality.py`, and
+   `python3 scripts/validate-package-completeness.py`; stop on any failure.
+3. Run `./scripts/install-toolbox.sh --apply --all-skills --personalities
+   --target "${HERMES_HOME:-$HOME/.hermes}"`. Do not pass any plugin or
+   profile selection unless `inventory/public-manifest.json` lists packages,
+   and do not activate the validator personality unless I ask.
+4. Prove the result with `hermes skills list --source local` and
+   `hermes config check`; report commands run and any blockers.
+
+Never read or copy credentials, memories, sessions, logs, caches, state
+databases, pairing state, or runtime files.
+```
+
+## Recommended Hermes workflow
+
+1. Start each session with `/personality validator`.
+2. Run user requests through `/prompt-enhancer [prompt]` before execution.
+3. Use `/profile-builder [goal]` for separate role, use-case, category, or
+   responsibility profiles.
+4. Use `/plugin-builder [goal]` when a reusable integration or automation
+   surface needs a plugin.
+5. Validate outputs against explicit source-of-truth checks before handoff.
+
+## Publishing model
+
+- Candidates are selected only through explicit, repeatable exporter flags or
+  local untracked allowlists under `.git/info/`; there is no default sweep.
+- Exports are transactional per package: a candidate is staged, sanitized,
+  and fully validated before it atomically replaces its destination, so a
+  failing candidate leaves the current public package byte-for-byte
+  unchanged.
+- The publisher fails closed on a dirty checkout, stages only accepted
+  paths, and exits silently with no output when there is nothing to publish.
 
 ## Validation
 
-Before publishing or installing from a checkout, run:
+Before publishing or installing from a checkout, run the full packet:
 
 ```bash
-# If your checkout has approved public skill author metadata, export the
-# repository-specific approved author line in your local shell before running
-# the public validators. Do not hardcode private/local identity terms in public
-# docs or scripts.
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
 python3 scripts/validate-public-safety.py
 python3 scripts/validate-identity-neutrality.py
+python3 scripts/validate-package-completeness.py
 python3 scripts/validate-tutorial-suite.py
+python3 scripts/verify-python-structure.py scripts tests plugins
+bash -n scripts/install-toolbox.sh scripts/publish-public-candidates.sh
 ```
 
 ## Safety model
 
-This repository is intentionally public. It must not contain credentials, raw memory, sessions, logs, state databases, private profile content, private plugin state, runtime caches, pairing data, or user-specific paths. Profile and plugin packages are shareable only after sanitization and manifest checks.
+This repository is intentionally public. It must not contain credentials, raw
+memory, sessions, logs, state databases, private profile content, private
+plugin state, runtime caches, pairing data, or user-specific paths. Profile
+and plugin packages are shareable only after sanitization, completeness, and
+manifest checks.
 
 See:
 
+- `docs/install.md`
 - `docs/recommended-hermes-workflow.md`
 - `docs/public-safety-policy.md`
 - `docs/identity-neutrality.md`
 - `docs/deterministic-workflow-primitives.md`
 - `docs/publishing-criteria.md`
+- `docs/customization-inventory.md`

@@ -1,0 +1,9 @@
+name: complete-plugin
+kind: standalone
+version: 0.1.0
+description: Minimal complete plugin fixture exercising the public export gates.
+provides_tools:
+- fixture_echo
+provides_commands:
+- fixture-status
+requires_env: []

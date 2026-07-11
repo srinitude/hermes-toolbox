@@ -1,0 +1,9 @@
+name: skill-plugin
+kind: standalone
+version: 0.1.0
+description: Fixture plugin bundling one real skill for runtime validation.
+provides_tools: []
+provides_commands: []
+provides_skills:
+- demo
+requires_env: []

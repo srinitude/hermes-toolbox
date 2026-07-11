@@ -7,20 +7,38 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
 jobs:
-  public-safety:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.11'
+      - name: Install pinned dependencies and Hermes runtime
+        run: |
+          python3 -m pip install PyYAML
+          mkdir -p "$HOME/.hermes/hermes-agent"
+          python3 -m venv "$HOME/.hermes/hermes-agent/venv"
+          "$HOME/.hermes/hermes-agent/venv/bin/pip" install hermes-agent==0.18.2
+          HERMES_CLI_DIR=$("$HOME/.hermes/hermes-agent/venv/bin/python" -c \
+            'from pathlib import Path; import hermes_cli; print(Path(hermes_cli.__file__).parent)')
+          ln -s "$HERMES_CLI_DIR" "$HOME/.hermes/hermes-agent/hermes_cli"
+          echo "$HOME/.hermes/hermes-agent/venv/bin" >> "$GITHUB_PATH"
+      - name: Run test suite
+        run: python3 -m unittest discover -s tests -v
       - name: Validate public safety
         run: python3 scripts/validate-public-safety.py
       - name: Validate identity neutrality
         run: python3 scripts/validate-identity-neutrality.py
-      - name: Syntax checks
-        run: |
-          bash -n scripts/install-toolbox.sh
-          bash -n scripts/publish-public-candidates.sh
-          python3 -m py_compile scripts/export-public-toolbox.py scripts/scan-public-candidates.py scripts/validate-public-safety.py scripts/validate-identity-neutrality.py
+      - name: Validate package completeness
+        run: python3 scripts/validate-package-completeness.py
+      - name: Validate tutorial suite
+        run: python3 scripts/validate-tutorial-suite.py
+      - name: Verify Python structure
+        run: python3 scripts/verify-python-structure.py scripts tests plugins
+      - name: Shell syntax checks
+        run: bash -n scripts/install-toolbox.sh scripts/publish-public-candidates.sh

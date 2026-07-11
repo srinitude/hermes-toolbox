@@ -14,9 +14,9 @@ metadata:
 
 ## When to use
 
-Use this skill when the user asks for a detailed rundown, audit, schema inventory, migration review, or troubleshooting explanation of a Hermes Agent profile's `config.yaml` or configuration behavior.
+Use this skill when the user asks for a detailed rundown, audit, schema inventory, migration review, or troubleshooting explanation of a Hermes Agent profile's `config.yaml` or configuration behavior. It also governs read-only profile-environment audits where configuration determines Projects, Kanban worker/orchestrator surfaces, plugin enablement, or consumer-profile eligibility.
 
-This is a class-level companion to the protected `hermes-agent` skill. Load `hermes-agent` first for general Hermes CLI/doc guidance, then use this skill for config-schema audit workflow and pitfalls.
+This is a class-level companion to the protected `hermes-agent` skill. Load `hermes-agent` first for general Hermes CLI/doc guidance, then use this skill for config-schema and live profile-environment audit workflows and pitfalls.
 
 ## Safety boundaries
 
@@ -55,6 +55,9 @@ This is a class-level companion to the protected `hermes-agent` skill. Load `her
    - unverifiable/plugin-defined keys are explicitly called dynamic or unknown.
 4. Extract static schema from `DEFAULT_CONFIG` rather than manually scanning prose.
    - Use a small Python/AST/import script to flatten the default config into `top.section.key`, type, and default value.
+   - Preserve runtime/source order and map every flattened path back to its AST source line.
+   - Harvest adjacent source comments as the first-party explanation for each leaf. Add concise path-specific explanations only where source comments are absent; never leave generic placeholder prose such as “configures X.”
+   - Assign every leaf an accepted-value/domain statement: exact enums where finite, `true|false` for booleans, bounded ranges when enforced, and explicitly open-ended domains for provider/model/plugin IDs.
    - Compare with `cli.py::load_cli_config` for legacy/compatibility defaults.
 5. Inspect targeted runtime files only for shapes not present in `DEFAULT_CONFIG`:
    - `model` object form and `api_mode` enum from `runtime_provider.py`.
@@ -65,18 +68,29 @@ This is a class-level companion to the protected `hermes-agent` skill. Load `her
 6. Answer with a clear separation:
    - **Static built-in defaults**: directly verified leaf keys.
    - **Accepted compatibility aliases**: e.g. `model.model`, `model.api_base`, legacy `fallback_model`.
+   - **Finite value domains**: extract enum-like choices from installed source/registries and current first-party docs rather than inferring them from defaults.
    - **Dynamic/open-ended maps**: `providers`, `mcp_servers`, `plugins`, `hooks`, plugin-specific sections.
    - **Secret handling**: what belongs in `.env`/auth flows instead of YAML.
+7. For requests phrased as “every possible/potential config value,” produce concrete artifacts in a safe temporary/export location:
+   - an exact source-ordered YAML dump of the installed `DEFAULT_CONFIG`;
+   - a flattened `dotted.path`, runtime type, default value, accepted domain, explanation, and source-line inventory;
+   - a separate dynamic/compatibility schema reference for aliases and open-ended maps.
+   Verify YAML value equality **and recursive key/path order** against imported `DEFAULT_CONFIG`; verify flattened paths are unique, complete, source-ordered, explained, and domain-annotated; report top-level/leaf counts and config schema version; and scan every artifact for credential-shaped literals as well as secret-shaped non-empty defaults.
+8. Package long inventories as an exact user-visible archive plus a concise summary. Include an artifact manifest with source and file hashes, then independently recompute those hashes and inspect archive members before delivery. If attaching `cli-config.yaml.example`, label it supplemental: it can document optional/compatibility shapes but may lag runtime defaults, so `DEFAULT_CONFIG` remains authoritative for the installed build.
 
 ## Pitfalls
 
 - Do not claim a complete universal schema for third-party plugins. Hermes config has dynamic plugin/provider maps; the honest claim is “complete for built-in/static keys in this installed version, plus verified dynamic schemas.”
 - Do not rely only on docs for defaults; local installed source may have newer schema defaults than published docs.
+- Do not treat a successful `hermes config set` plus YAML parse as proof that a setting is effective at runtime. For non-standard or task-specific keys, verify the live call path actually reads and forwards the key. Example: in Hermes v0.18.0, `auxiliary.<task>.extra_body` is consumed by centralized `call_llm()`, but `/goal` judge calls may manually use `get_text_auxiliary_client("goal_judge")` + `get_auxiliary_extra_body()`; if that helper does not merge `auxiliary.goal_judge.extra_body`, a config such as `auxiliary.goal_judge.extra_body.reasoning.effort: xhigh` can be present in YAML yet not sent on the wire.
 - Do not read `.env` just to list available credential variables. `hermes config check` lists required/optional env names without exposing values.
 - `hermes config show` can print masked credentials. If quoting it, only quote non-sensitive sections or redact aggressively.
 - `hermes config set` type-coerces simple strings; mention this when explaining value types.
+- Do not trust UI/dashboard `CONFIG_SCHEMA` option lists as runtime enums without checking the actual normalizer/consumer. These metadata lists can lag current behavior; installed runtime source and current first-party docs win.
 - `config.yaml` belongs to a profile (`HERMES_HOME`); it is not a project file and does not sandbox filesystem access.
 
 ## Reference notes
 
 - Session-specific schema-audit method and verified key families: `references/profile-config-schema-audit-2026-07.md`.
+- Exhaustive, source-linked config-reference artifact and adversarial-validation pattern: `references/exhaustive-config-reference-artifacts.md`.
+- Read-only Projects/Kanban/plugin/worker-lane audit procedure and contract checks: `references/kanban-control-plane-read-only-audit.md`.

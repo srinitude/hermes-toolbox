@@ -76,11 +76,37 @@ When a user reply includes a goal or desired outcome, do not leave it as convers
 
 Completion criterion: no raw user reply directly changes the plugin plan without prompt-enhancer normalization, safety review, and goal coverage update.
 
+<!-- coding-contract-propagation:start -->
+## Coding Contract Propagation
+
+Every plugin design and build inherits the exact Universal Coding Contract for Code Work from `prompt-enhancer`. It is a mandatory gate across the working spec, final agreement, implementation, and validation—not optional style guidance.
+
+```yaml
+coding_contract:
+  max_file_physical_lines: 200
+  max_construct_physical_lines: 30
+  max_nesting_depth: 3
+  test_nesting_baseline: test_declaration
+  tdd_sequence: [BOOTSTRAP, RED, GREEN, REFACTOR]
+  real_tests_only: true
+  prohibited_test_doubles: [mocks, stubs, fakes, spies, placeholders]
+  test_targets: [user-facing situations, public contracts, APIs, integration boundaries, interfaces]
+```
+
+Before final agreement, list the real-service test path, the exact command that will witness RED before production code, and language-aware validation commands for file length, construct length, and nesting. Missing credentials, paid-call approval, or a real service are blockers, not permission to simulate.
+
+After agreement, build one vertical behavior slice at a time as `BOOTSTRAP → RED → GREEN → REFACTOR`. Do not create or approve source/tests containing TODOs, mocks, stubs, fakes, spies, placeholders, synthetic success responses, skipped/xfail placeholders, implementation-detail assertions, or tests written for testing’s sake.
+
+Plugin completion fails if any created or modified source/test file exceeds 200 physical lines, any named construct exceeds 30 physical lines, semantic nesting exceeds three, RED was not witnessed first, or behavior evidence comes from a test double instead of real functionality and integration paths.
+<!-- coding-contract-propagation:end -->
+
 ## Working Plugin Specification
 
 Maintain this spec throughout the conversation. Use it as the single source of truth.
 
 For the local Hermes environment, also apply the plugin-profile routing convention in `references/plugin-profile-routing.md` before choosing a target plugin path: user-specific plugins belong to `<first-name>-plugins` and must start with `<first-name>-`; reusable/non-user-specific plugins belong to `non-<first-name>-plugins` and must remain identity-neutral.
+
+Before writing into any workshop, distribution, or public-source profile, load `references/plugin-source-automation-preflight.md`. Check cron jobs, watchers, and export scripts that may consume every new plugin directory. Local source creation, consumer installation, candidate export, and publication are separate approvals; pause only the relevant downstream publisher when unapproved automation would otherwise act, and do not resume it without an explicit decision or package opt-out.
 
 ```yaml
 plugin_spec:
@@ -156,6 +182,15 @@ plugin_spec:
     files_to_create: []
     files_to_modify: []
     dependencies: []
+    coding_contract:
+      max_file_physical_lines: 200
+      max_construct_physical_lines: 30
+      max_nesting_depth: 3
+      test_nesting_baseline: test_declaration
+      tdd_sequence: [BOOTSTRAP, RED, GREEN, REFACTOR]
+      real_tests_only: true
+      prohibited_test_doubles: [mocks, stubs, fakes, spies, placeholders]
+      test_targets: [user-facing situations, public contracts, APIs, integration boundaries, interfaces]
   validation:
     docs_checked: []
     cli_checks: []
@@ -180,6 +215,16 @@ Treat goal mapping as a compact coverage matrix, not as a prose summary. For eve
 5. Do not present the final plugin agreement while any `unmapped_primitives[]` remain unless they are explicitly blocked and surfaced to the user.
 
 A goal is fully covered only when the new plugin can carry the needed behavior through its own approved plugin primitives. Do not assume default Hermes behavior, a profile setting, or a separate skill will achieve the goal unless the final agreement explicitly includes that dependency and explains why it is not part of the plugin.
+
+## Kanban Workflow Plugin Extensions
+
+When a plugin request mentions Kanban, phase workers, multi-profile workflows, approval gates, context bundles, board automation, or side-effecting workflow actions, load `references/kanban-workflow-plugin-extensions.md` before choosing an extension surface. Prefer profile distributions, skills, config, MCP, cron, and existing Kanban CLI/tool surfaces before creating a plugin. If a plugin is still justified, validate native dependency and task-scoping semantics, preserve `work_key`/`work_run` and `context_bundle`, bind the active profile through `ctx.profile_name`, keep model tools preview-only, use exact-token human confirmation for side effects, and state external CLI/dashboard enforcement limits explicitly.
+
+When the user requires universal Kanban enforcement but forbids upstream/core edits, also load `references/external-kanban-policy-brokers.md`. Distinguish semantic compatibility from unchanged direct-native mutation UX before planning. A profile plugin alone is insufficient: the strongest no-core design uses a dedicated OS-owned reference monitor, broker-backed human and worker tools, a separate user-side workspace launcher, fail-closed native surfaces, per-run worker compatibility snapshots, and exact-version compatibility holds. Treat source creation, consumer installation, privileged deployment, cutover, and publication as separate approvals.
+
+## External Detector Feedback-Loop Plugins
+
+When a plugin will call an external evaluator/detector API, run release-readiness checks, loop on feedback, or update reusable learnings from detector results, load `references/external-detector-feedback-loop-plugins.md` before final agreement. Treat API calls as external side effects, declare keys through `requires_env`, keep handlers lazy/time-bounded, distinguish in-progress/success/failure/timeout states, and do not claim live detector validation unless credentials and approved calls actually ran.
 
 ## Gold-Standard Requirements
 
@@ -266,6 +311,7 @@ Use supported public APIs only:
 - `ctx.register_command(...)`
 - `ctx.register_cli_command(...)`
 - `ctx.register_skill(...)`
+  - Pass a `pathlib.Path` pointing to the actual bundled `SKILL.md` file. Do not pass the skill directory or a string path; live `PluginContext.register_skill` calls `.exists()` on the `Path` and registers the file itself.
 - `ctx.dispatch_tool(...)`
 - `ctx.llm.complete(...)` / `ctx.llm.complete_structured(...)`
 - specialized provider registration APIs for platform/provider/backend plugins
@@ -375,7 +421,13 @@ Also validate:
 - logs have no plugin load errors
 - no writes occurred outside approved surfaces
 
-Completion criterion: objective command/test output proves discovery, load, capability behavior, and error handling.
+For profile-installed plugins copied from a workshop/source profile, also run a source/runtime hygiene check: remove `__pycache__/` and other generated runtime artifacts before comparing source and installed trees, then use `diff -qr` or a manifest hash check on source files only. A mismatch caused only by bytecode caches is not plugin content drift; clean it up and recheck. Run syntax compilation before the final hygiene scan: explicit `python3 -m py_compile` writes `.pyc` files even when `PYTHONDONTWRITEBYTECODE=1`, so remove the resulting cache afterward or compile a temporary copy outside the package tree.
+
+Use a fresh-process real Hermes `PluginManager`/`PluginContext` discovery probe for registration feedback. Exercise actual registered capabilities, host dispatch, active-profile derivation, command conflicts, toolset filtering, `register_skill(Path-to-SKILL.md)`, real handlers, and approved real services; verify `hermes -p <profile> tools list` exposes the plugin toolset. If the real manager or service cannot run, report a blocker instead of substituting a fake registration context.
+
+Before final tests, review, structural scans, or commits, establish **writer quiescence**: every delegated/background coding process that can modify the target tree must have exited or been stopped, and Git HEAD/status must remain stable across the verification window. A test run racing an active writer is only transient evidence—do not repair, commit, or report it until the writer finishes and the changed file is re-read. Treat subagent summaries as unverified claims: compare tool/schema counts, paths, commits, and side effects against the live source/tree before encoding them into contracts.
+
+Completion criterion: objective command/test output from a quiescent tree proves discovery, load, capability behavior, source/runtime install hygiene, and error handling.
 
 ## Fast Collaboration Loop
 
@@ -447,6 +499,7 @@ Goals and desired outcomes:
   - Status: `mapped|skipped|blocked`
 Non-goals / intentionally skipped outcomes: ...
 Goal coverage status: every goal has every plugin primitive category mapped, marked not applicable/skipped, or blocked; no unmapped primitives remain.
+Coding contract: 200-line file limit; 30-line construct limit; depth-3 nesting limit; test-declaration baseline; real-service test path; witnessed RED command; BOOTSTRAP/RED/GREEN/REFACTOR validation; no test doubles or implementation-detail assertions.
 Capabilities:
 - Tools: ...
 - Hooks: ...
@@ -480,18 +533,30 @@ Rules:
 
 Completion criterion: the user explicitly agrees to a concrete file/action/config list.
 
-## Creation Protocol After Agreement
+## Creation / Installation Protocol After Agreement
+
+For standalone directory plugins whose plugin directory is also the repository root, and for plugins tested against a live local service, follow `references/standalone-plugin-real-service-tdd.md`. It covers fresh-process real-manager probes, pytest's repository-root `__init__.py` import trap, named temporary profile isolation while retaining real-service connectivity, reversible approval-state testing, complete native-output security projections, incrementally bounded subprocess capture, fail-closed fixture cleanup across setup failures, and clean checkpoint boundaries.
+
+When a plugin consumes a private one-time catalog and updates durable state—identity seeds, restore mappings, approval files, or similar—follow `references/one-time-private-file-consumption.md`. It defines lock-before-read ordering, exact-`0600` no-follow validation, descriptor-only same-inode consumption without any post-open pathname mutation, secure atomic ledger writes, and the required TDD race/filesystem matrix. Do not introduce random claim paths as a TOCTOU workaround.
 
 After agreement:
 
-1. Create only the agreed files under the allowed plugin path.
-2. Use direct file tools for plugin files or exact commands only when necessary.
-3. Enable the plugin only if the agreement included enablement.
-4. Run discovery/debug validation.
-5. Run minimal behavior validation.
-6. Validate every `goals.goal_to_primitives[]` entry with command output, test output, file inspection, or a clearly stated blocker.
-7. Fix failures inside the agreed scope.
-8. Report final paths, commands run, objective results, and goal coverage evidence.
+When an independent security review finds dispatch, output-bounding, sanitization, caller-binding, schema, or real-test-resource defects, follow `references/security-review-remediation.md` before committing or installing. It includes the complete-operation argv gate, incremental subprocess capture pattern, all-native-string sanitation scope, virtualenv interpreter pitfall, collision-safe fixtures, and staged re-review gate.
+
+1. BOOTSTRAP the approved real test environment, real services, structural validators, and focused test command without writing production code.
+2. RED: write one user-facing/public-contract/API/integration/interface behavior test and run it to witness the expected missing-behavior failure.
+3. GREEN: create only enough real production code under the allowed plugin path to pass that test, then run the focused and relevant full suites.
+4. REFACTOR while green and re-run language-aware file-length, construct-length, and nesting validation.
+5. Repeat the vertical cycle for each agreed behavior.
+6. Enable the plugin only if the agreement included enablement.
+7. Run real discovery, registration, host-dispatch, service, and error-path validation.
+8. Validate every `goals.goal_to_primitives[]` entry with real command/test/file evidence or a clearly stated blocker.
+9. Fix failures inside the agreed scope without weakening tests or adding test doubles.
+10. Report final paths, witnessed RED/GREEN commands, structural checks, and goal coverage evidence.
+
+When the user asks to install an already-existing plugin into a named profile, follow `references/profile-plugin-install-verification.md`: target the named profile's `$HERMES_HOME/plugins/<plugin-name>/`, enable with `hermes -p <profile> plugins enable <plugin-name> --no-allow-tool-override` unless override was explicitly approved, and verify via JSON plugin listing, config state, syntax/import sanity, and a focused registration smoke test when applicable.
+
+When the user approves a large profile-local plugin suite or asks to execute an entire profile spec with many plugins, follow `references/profile-plugin-suite-generation.md`: preserve the profile spec's side-effect gates, validate with `HERMES_HOME` pinned to the target profile, use the global plugin manager for hook checks, prevent duplicate tool-name collisions, run with `PYTHONDONTWRITEBYTECODE=1` for hygiene scans, and account for `HERMES_KANBAN_BOARD` overriding persisted board selection.
 
 Completion criterion: plugin exists, loads, performs the agreed capability, and passes the agreed validation threshold.
 
@@ -525,11 +590,26 @@ Completion criterion: plugin exists, loads, performs the agreed capability, and 
 
 14. **Leaving not-applicable primitives implicit.** A primitive that does not apply still needs a short reason, otherwise the goal coverage matrix cannot prove the category was considered.
 
+15. **Substituting a fake registration context.** Do not use one. Validate registration, host state, path types, dispatch, and tool visibility through a fresh-process real plugin-manager load before installation.
+
+16. **Letting the model self-confirm side effects.** A model-callable `confirm` boolean is not human approval. Keep model tools preview-only and bind human slash confirmation to a short-lived, single-use token for the exact canonical operation.
+
+17. **Parsing presentation-truncated JSON.** Parse complete native output first, validate its shape, then truncate only the human-visible rendering. Never fall back from an unresolved label to treating that label as an internal ID.
+
+18. **Confusing plugin enablement with model visibility.** `plugins list` can be green while a custom toolset is filtered out. Check `tools list` and a fresh agent process for each approved consumer profile.
+
+19. **Ignoring native dependency semantics.** If child promotion requires a parent to reach `done`, a successful phase must complete rather than block for a later reviewer. Validate task-scoped versus orchestrator-only tools before writing worker instructions.
+
+20. **Overclaiming hook enforcement.** `pre_tool_call` protects only processes and tool calls that load the plugin. External CLI, dashboard, cron, and scripts require first-party enforcement or must be reported as a boundary/drift source.
+
 ## Verification Checklist
 
 Before final agreement:
 
 - [ ] Latest user reply passed through prompt-enhancer extraction.
+- [ ] `implementation.coding_contract` records the 200-line file, 30-line construct, depth-3 nesting, test-declaration baseline, and BOOTSTRAP/RED/GREEN/REFACTOR gates.
+- [ ] The final agreement names the real-service test path, witnessed RED command, and parser/language-aware structural validation commands.
+- [ ] Tests target user-facing situations, public contracts, APIs, integration boundaries, or interfaces without mocks, stubs, fakes, spies, placeholders, or implementation-detail assertions.
 - [ ] Plugin spec is current and compact.
 - [ ] User goals, desired outcomes, success measures, and non-goals are captured in the plugin spec.
 - [ ] Every user goal maps across the Hermes plugin primitive set or each primitive is explicitly `not_applicable`, `skipped`, or `blocked`.
@@ -554,8 +634,16 @@ After creation:
 - [ ] Plugin files exist only in agreed paths.
 - [ ] `HERMES_PLUGINS_DEBUG=1 hermes plugins list` shows expected discovery/load state.
 - [ ] Plugin is enabled only if agreed.
+- [ ] A real fresh-process `PluginManager`/`PluginContext` probe validates registration contracts.
+- [ ] `hermes -p <profile> tools list` shows each intended plugin toolset in every approved consumer profile.
+- [ ] Active-profile binding and cross-profile rejection were tested.
+- [ ] Model-callable side-effect tools cannot self-confirm; any human token is exact-operation-bound, single-use, and expiry-tested.
+- [ ] Unknown flags, ambiguous labels, missing canonical board, malformed/large native output, timeouts, and nonzero command exits fail closed.
 - [ ] Tool/command/provider behavior was exercised.
 - [ ] Bad-input/missing-env behavior is graceful.
 - [ ] Logs show no plugin load errors.
 - [ ] Post-creation validation reports each goal mapping with evidence or a blocker.
+- [ ] Source/install trees match after generated caches are removed.
+- [ ] Native task/dependency semantics and worker tool scope were verified when Kanban is involved.
+- [ ] External enforcement boundaries, fresh-session/restart needs, and any paused source-export automation are reported.
 - [ ] Final response reports actual validation evidence.
