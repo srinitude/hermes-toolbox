@@ -56,12 +56,22 @@ class StaticSourceTests(unittest.TestCase):
             self.assertNotIn('--autostash', text, name)
             self.assertNotIn('git pull', text, name)
             self.assertIsNone(SWEEP_RE.search(text), name)
+        scan = (SCRIPTS / 'scan-public-candidates.py').read_text(encoding='utf-8')
+        self.assertIn("os.environ['PYTHONDONTWRITEBYTECODE'] = '1'", scan)
 
 
 class PreconditionTests(PublisherCase):
     def test_dirty_starting_worktree_fails_closed(self):
         (self.repo / 'scratch.txt').write_text('leftover residue\n', encoding='utf-8')
         self.assert_blocked(self.publish(), 'dirty', self.baseline, self.baseline)
+
+    def test_ignored_starting_residue_fails_closed(self):
+        exclude = self.repo / '.git' / 'info' / 'exclude'
+        exclude.write_text('ignored-cache/\n', encoding='utf-8')
+        residue = self.repo / 'ignored-cache'
+        residue.mkdir()
+        (residue / 'state.bin').write_bytes(b'ignored runtime residue')
+        self.assert_blocked(self.publish(), 'residue', self.baseline, self.baseline)
 
     def test_checkout_must_sit_exactly_at_origin_main(self):
         git_in(self.repo, 'commit', '-q', '--allow-empty', '-m', 'local drift')
@@ -160,12 +170,21 @@ class LockTests(PublisherCase):
 
 
 class BashPublisherTests(PublisherCase):
-    def test_bash_publisher_delegates_to_failclosed_scan(self):
+    def test_non_github_origin_fails_closed(self):
         append_source_update(self.home)
         result = run_publisher_script(self.repo, self.home, self.env)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(origin_main(self.bare), head(self.repo))
-        self.assertIn('plugins/demo-plugin/README.md', committed_files(self.repo))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('unsupported origin', result.stderr)
+        self.assertEqual(head(self.repo), self.baseline)
+        self.assertEqual(origin_main(self.bare), self.baseline)
+
+    def test_github_lookalike_host_fails_closed(self):
+        git_in(self.repo, 'remote', 'set-url', 'origin',
+               'https://notgithub.com/srinitude/hermes-toolbox.git')
+        result = run_publisher_script(self.repo, self.home, self.env)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('unsupported origin', result.stderr)
+        self.assertEqual(head(self.repo), self.baseline)
 
     def test_github_origin_requires_public_visibility_proof(self):
         url = 'https://github.com/srinitude/hermes-toolbox.git'
