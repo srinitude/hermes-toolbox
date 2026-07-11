@@ -1,9 +1,0 @@
-[
-  {
-    "body": "A bot with terminal tools needs strict authorization, pairing, and allowlists before it should be trusted.",
-    "id": "gateway-intro",
-    "level": "2",
-    "summary": "A bot with terminal tools needs strict authorization, pairing, and allowlists before it should be trusted.",
-    "title": "Hermes Gateway Lab"
-  }
-]

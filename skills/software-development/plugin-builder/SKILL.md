@@ -537,7 +537,7 @@ Completion criterion: the user explicitly agrees to a concrete file/action/confi
 
 For standalone directory plugins whose plugin directory is also the repository root, and for plugins tested against a live local service, follow `references/standalone-plugin-real-service-tdd.md`. It covers fresh-process real-manager probes, pytest's repository-root `__init__.py` import trap, named temporary profile isolation while retaining real-service connectivity, reversible approval-state testing, complete native-output security projections, incrementally bounded subprocess capture, fail-closed fixture cleanup across setup failures, and clean checkpoint boundaries.
 
-When a plugin consumes a private one-time catalog and updates durable state—identity seeds, restore mappings, approval files, or similar—follow `references/one-time-private-file-consumption.md`. It defines lock-before-read ordering, exact-`0600` no-follow descriptor validation, same-inode claiming and consumption, failure restoration, secure atomic ledger writes, and the required TDD race/filesystem matrix.
+When a plugin consumes a private one-time catalog and updates durable state—identity seeds, restore mappings, approval files, or similar—follow `references/one-time-private-file-consumption.md`. It defines lock-before-read ordering, exact-`0600` no-follow validation, descriptor-only same-inode consumption without any post-open pathname mutation, secure atomic ledger writes, and the required TDD race/filesystem matrix. Do not introduce random claim paths as a TOCTOU workaround.
 
 After agreement:
 

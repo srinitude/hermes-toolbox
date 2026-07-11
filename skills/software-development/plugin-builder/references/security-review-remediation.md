@@ -25,7 +25,9 @@ Treat every model-facing native string as untrusted, not only terminal text. App
 - topology labels and native error codes;
 - terminal/pane text.
 
-The sanitizer should remove CSI/OSC ANSI sequences, C0/C1/DEL controls, and Unicode format controls, then redact complete credential shapes. Include Basic/Bearer authorization, quoted secrets containing spaces, Cookie/Set-Cookie headers with multiple semicolon-separated values, and common token prefixes. Bound the result only after sanitation/redaction.
+The sanitizer must remove both ESC and C1 forms of CSI, OSC, DCS, SOS, PM, and APC, including terminated and end-of-input/truncated sequences. Unterminated CSI needs an explicit end-of-input alternative before a generic two-byte ESC fallback; otherwise an input such as `prefix + ESC[31` or `prefix + C1-CSI + 31` can leak `prefix31`. Redact complete credential shapes, including quoted and unquoted Basic/Bearer values, folded Authorization/Cookie headers, Cookie/Set-Cookie assignments, multiple semicolon-separated values, and common token prefixes. Bound the result only after sanitation/redaction.
+
+Use a synthetic non-secret adversarial matrix over every CSI parameter byte (`0x30–0x3f`), intermediate byte (`0x20–0x2f`), and final byte (`0x40–0x7e`), plus terminated and truncated string-control forms. A representative happy case is not enough.
 
 ## Validation order
 
@@ -48,6 +50,8 @@ Validate representative valid and invalid payloads through a fresh real PluginMa
 
 - Generate unique session/resource names per test process.
 - Probe for collision and abort; never delete a pre-existing fixed-name resource during setup.
+- Enter the teardown-protected `try/finally` immediately after collision checks and before process launch. Track partial setup (`process=None`, bootstrap caller identity) so failures in `Popen`, readiness, snapshot, or fixture-agent creation still attempt cleanup.
+- Nest cleanup so native stop failure cannot prevent terminate/kill-and-reap, session deletion cannot be skipped by wait failure, and protected-resource comparison still runs.
 - Use framework-private temporary paths for command-injection sentinels.
 - Teardown only resources whose exact generated identity belongs to the test.
 - Launch fresh probes with `sys.executable` **without calling `Path.resolve()`**. Resolving a virtualenv interpreter can follow its symlink to the base Python and silently drop the virtualenv dependency context.

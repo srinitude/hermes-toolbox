@@ -1,9 +1,0 @@
-[
-  {
-    "body": "Progress state is local runtime data and must never be exported as public tutorial content.",
-    "id": "learning-progress-intro",
-    "level": "all",
-    "summary": "Progress state is local runtime data and must never be exported as public tutorial content.",
-    "title": "Hermes Learning Progress"
-  }
-]

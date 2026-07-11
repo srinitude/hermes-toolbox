@@ -1,9 +1,0 @@
-[
-  {
-    "body": "Start with `hermes doctor`, `hermes status`, targeted logs, and the exact command that failed.",
-    "id": "troubleshooting-intro",
-    "level": "3",
-    "summary": "Start with `hermes doctor`, `hermes status`, targeted logs, and the exact command that failed.",
-    "title": "Hermes Troubleshooting Lab"
-  }
-]

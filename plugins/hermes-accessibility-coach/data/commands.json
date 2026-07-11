@@ -1,9 +1,0 @@
-{
-  "commands": [
-    "plain-language"
-  ],
-  "tools": [
-    "tutorial_simplify_explanation",
-    "tutorial_detect_jargon"
-  ]
-}

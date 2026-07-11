@@ -1,9 +1,0 @@
-[
-  {
-    "body": "Choose the lightest correct extension surface before writing plugin code; validate manifest, register APIs, handler JSON contracts, and load behavior.",
-    "id": "plugin-builder-intro",
-    "level": "4",
-    "summary": "Choose the lightest correct extension surface before writing plugin code; validate manifest, register APIs, handler JSON contracts, and load behavior.",
-    "title": "Hermes Plugin Builder Lab"
-  }
-]

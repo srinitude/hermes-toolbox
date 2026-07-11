@@ -10,16 +10,16 @@ from pathlib import Path
 
 import yaml
 
-from tests.support import REPO
+from tests.support import FIXTURES, REPO
 
 INSTALLER = REPO / 'scripts' / 'install-toolbox.sh'
 SNIPPET_FILE = REPO / 'primitives' / 'personalities' / 'validator' / 'config.public.yaml'
 MANIFEST = REPO / 'inventory' / 'public-manifest.json'
 SKILL = 'hermes-agent/honcho-memory-provider'
 OTHER_SKILL = 'software-development/plugin-builder'
-PLUGIN = 'hermes-command-lab'
-OTHER_PLUGIN = 'hermes-tutorial-compass'
-PROFILE = 'hermes-agent-tutorial'
+PLUGIN = 'complete-plugin'
+OTHER_PLUGIN = 'other-plugin'
+PROFILE = 'complete-profile'
 
 
 def validator_snippet() -> str:
@@ -48,17 +48,14 @@ class InstallerCase(unittest.TestCase):
 
 class DryRunTests(InstallerCase):
     def test_dry_run_makes_no_changes(self):
-        result = self.run_installer('--skill', SKILL, '--plugin', PLUGIN,
-                                    '--profile', PROFILE, '--personalities')
+        result = self.run_installer('--skill', SKILL, '--personalities')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.target_tree(), [])
 
     def test_dry_run_prints_exact_destinations(self):
-        result = self.run_installer('--skill', SKILL, '--plugin', PLUGIN,
-                                    '--profile', PROFILE)
+        result = self.run_installer('--skill', SKILL)
         self.assertEqual(result.returncode, 0, result.stderr)
-        for rel in [f'skills/{SKILL}', f'plugins/{PLUGIN}', f'profiles/{PROFILE}']:
-            self.assertIn(f'{self.target}/{rel}', result.stdout)
+        self.assertIn(f'{self.target}/skills/{SKILL}', result.stdout)
 
 
 class SkillSelectionTests(InstallerCase):
@@ -82,7 +79,41 @@ class SkillSelectionTests(InstallerCase):
         self.assertEqual(self.target_tree(), [])
 
 
-class PluginAndProfileSelectionTests(InstallerCase):
+class PackageInstallerCase(InstallerCase):
+    def setUp(self):
+        super().setUp()
+        self.fixture_repo = Path(tempfile.mkdtemp(prefix='installer-repo-'))
+        self.addCleanup(shutil.rmtree, self.fixture_repo, True)
+        (self.fixture_repo / 'scripts').mkdir()
+        (self.fixture_repo / 'inventory').mkdir()
+        shutil.copy2(INSTALLER, self.fixture_repo / 'scripts/install-toolbox.sh')
+        shutil.copytree(FIXTURES / 'complete-plugin',
+                        self.fixture_repo / 'plugins' / PLUGIN)
+        shutil.copytree(FIXTURES / 'complete-profile',
+                        self.fixture_repo / 'profiles' / PROFILE)
+        manifest = {
+            'skills': [],
+            'plugins': [{'path': f'plugins/{PLUGIN}/plugin.yaml'}],
+            'profiles': [{'path': f'profiles/{PROFILE}/distribution.yaml'}],
+            'personalities': [],
+        }
+        (self.fixture_repo / 'inventory/public-manifest.json').write_text(
+            json.dumps(manifest), encoding='utf-8')
+
+    def run_installer(self, *args: str) -> subprocess.CompletedProcess:
+        script = self.fixture_repo / 'scripts/install-toolbox.sh'
+        return subprocess.run(['bash', str(script), '--target', str(self.target), *args],
+                              capture_output=True, text=True)
+
+
+class PluginAndProfileSelectionTests(PackageInstallerCase):
+    def test_package_dry_run_is_side_effect_free(self):
+        result = self.run_installer('--plugin', PLUGIN, '--profile', PROFILE)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target_tree(), [])
+        for rel in (f'plugins/{PLUGIN}', f'profiles/{PROFILE}'):
+            self.assertIn(f'{self.target}/{rel}', result.stdout)
+
     def test_selected_plugin_installs_alone(self):
         result = self.run_installer('--apply', '--plugin', PLUGIN)
         self.assertEqual(result.returncode, 0, result.stderr)
