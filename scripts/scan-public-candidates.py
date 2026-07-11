@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Scan public toolbox state and publish accepted candidates fail-closed."""
 from __future__ import annotations
 
 import argparse
@@ -6,68 +7,186 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
-def run(cmd, cwd, capture=False):
-    return subprocess.run(cmd, cwd=cwd, text=True, capture_output=capture, check=False)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-def status(repo: Path) -> str:
-    return subprocess.check_output(['git', 'status', '--porcelain'], cwd=repo, text=True)
+from candidate_policy import read_allowlist  # noqa: E402
+from toolbox_common import git_info_dir  # noqa: E402
 
-def main() -> int:
+COMMIT_MESSAGE = 'chore: publish public toolbox candidates'
+REQUIRED_ALLOWLISTS = ('public-plugin-allowlist.txt', 'public-profile-allowlist.txt')
+VALIDATORS = ('validate-public-safety.py', 'validate-identity-neutrality.py',
+              'validate-package-completeness.py')
+INVENTORY_FILES = ('inventory/public-manifest.json', 'inventory/source-fingerprints.json')
+
+
+def run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, cwd=cwd, text=True, capture_output=True, check=False)
+
+
+def git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    return run(['git', *args], repo)
+
+
+def fail(message: str) -> int:
+    print(f'publish blocked: {message}', file=sys.stderr)
+    return 1
+
+
+def gated(result: subprocess.CompletedProcess, label: str) -> int:
+    """Forward diagnostics to stderr only; stdout stays silent for cron no-ops."""
+    sys.stderr.write(result.stderr)
+    if result.returncode == 0:
+        return 0
+    sys.stderr.write(result.stdout)
+    return fail(f'{label} failed with exit code {result.returncode}')
+
+
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices=['scan', 'validate', 'publish'], required=True)
     parser.add_argument('--hermes-home', default=os.environ.get('HERMES_HOME', str(Path.home() / '.hermes')))
     parser.add_argument('--repo', default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument('--private-profile-prefix', default=os.environ.get('HERMES_PRIVATE_PROFILE_PREFIX', ''))
     parser.add_argument('--public-plugin-profile', default=os.environ.get('HERMES_PUBLIC_PLUGIN_PROFILE', ''))
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def scan_summary(repo: Path) -> dict:
+    def has_package_dirs(root: Path) -> bool:
+        return root.exists() and any(p.is_dir() for p in root.glob('*'))
+    return {'repo': '<repo>', 'has_skills': (repo / 'skills').exists(),
+            'has_profiles': has_package_dirs(repo / 'profiles'),
+            'has_plugins': has_package_dirs(repo / 'plugins')}
+
+
+def worktree_error(repo: Path) -> str | None:
+    status = git(repo, 'status', '--porcelain')
+    if status.returncode != 0:
+        return 'target is not a git worktree'
+    if status.stdout.strip():
+        return 'starting worktree is dirty; refusing to publish'
+    origin = git(repo, 'rev-parse', '--verify', '--quiet', 'origin/main')
+    if origin.returncode != 0:
+        return 'origin/main is not resolvable in the target worktree'
+    if git(repo, 'rev-parse', 'HEAD').stdout.strip() != origin.stdout.strip():
+        return 'checkout is not exactly at origin/main; refusing to publish'
+    return None
+
+
+def identity_configured(repo: Path) -> bool:
+    name = git(repo, 'config', '--local', '--get', 'user.name')
+    email = git(repo, 'config', '--local', '--get', 'user.email')
+    return (name.returncode == 0 and email.returncode == 0
+            and bool(name.stdout.strip()) and bool(email.stdout.strip()))
+
+
+def policy_error(repo: Path, args: argparse.Namespace) -> str | None:
+    info = git_info_dir(repo)
+    for name in REQUIRED_ALLOWLISTS:
+        if not (info / name).is_file():
+            return f'missing required local allowlist {name}'
+    if not identity_configured(repo):
+        return 'repo-local git identity (user.name and user.email) is not configured'
+    plugins = read_allowlist(info / 'public-plugin-allowlist.txt', 'public plugin')
+    if plugins and not args.public_plugin_profile:
+        return 'plugins are allowlisted but no source profile gate (--public-plugin-profile) is configured'
+    return None
+
+
+def export_candidates(repo: Path, args: argparse.Namespace, change_list: Path) -> int:
+    cmd = ['python3', str(repo / 'scripts' / 'export-public-toolbox.py'),
+           '--hermes-home', args.hermes_home, '--repo', str(repo),
+           '--change-list', str(change_list)]
+    if args.private_profile_prefix:
+        cmd += ['--private-profile-prefix', args.private_profile_prefix]
+    if args.public_plugin_profile:
+        cmd += ['--public-plugin-profile', args.public_plugin_profile]
+    return gated(run(cmd, repo), 'transactional exporter')
+
+
+def validation_packet(repo: Path) -> list[list[str]]:
+    packet = [['python3', str(repo / 'scripts' / name)] for name in VALIDATORS]
+    if (repo / 'profiles' / 'hermes-agent-tutorial').is_dir():
+        packet.append(['python3', str(repo / 'scripts' / 'validate-tutorial-suite.py')])
+    targets = [name for name in ('scripts', 'tests', 'plugins') if (repo / name).is_dir()]
+    packet.append(['python3', str(repo / 'scripts' / 'verify-python-structure.py'), *targets])
+    if (repo / 'tests').is_dir():
+        packet.append(['python3', '-m', 'unittest', 'discover', '-s', 'tests'])
+    return packet
+
+
+def run_validation_packet(repo: Path) -> int:
+    for cmd in validation_packet(repo):
+        code = gated(run(cmd, repo), ' '.join(cmd[1:]))
+        if code != 0:
+            return code
+    return 0
+
+
+def accepted_entries(change_list: Path) -> list[str]:
+    if not change_list.is_file():
+        return []
+    return [entry for entry in change_list.read_text(encoding='utf-8').split('\0') if entry]
+
+
+def stage_accepted(repo: Path, entries: list[str]) -> int:
+    for rel in [*entries, *INVENTORY_FILES]:
+        if not (repo / rel).exists():
+            continue
+        added = git(repo, 'add', '--', rel)
+        if added.returncode != 0:
+            return fail(f'could not stage accepted path {rel}: {added.stderr.strip()}')
+    return 0
+
+
+def commit_and_push(repo: Path) -> int:
+    committed = git(repo, 'commit', '-q', '-m', COMMIT_MESSAGE)
+    if committed.returncode != 0:
+        return fail(f'commit failed: {(committed.stdout + committed.stderr).strip()}')
+    pushed = git(repo, 'push', '--quiet', 'origin', 'HEAD:refs/heads/main')
+    if pushed.returncode != 0:
+        return fail(f'push failed: {pushed.stderr.strip()}')
+    print(f"published accepted public candidates: {git(repo, 'rev-parse', 'HEAD').stdout.strip()}")
+    return 0
+
+
+def publish(repo: Path, args: argparse.Namespace) -> int:
+    error = worktree_error(repo) or policy_error(repo, args)
+    if error:
+        return fail(error)
+    with tempfile.TemporaryDirectory(prefix='toolbox-publish-') as tmp:
+        change_list = Path(tmp) / 'accepted.lst'
+        code = export_candidates(repo, args, change_list)
+        code = code or run_validation_packet(repo)
+        code = code or stage_accepted(repo, accepted_entries(change_list))
+    if code != 0:
+        return code
+    if not git(repo, 'diff', '--cached', '--name-only').stdout.strip():
+        return 0
+    return commit_and_push(repo)
+
+
+def run_validate_mode(repo: Path) -> int:
+    for name in VALIDATORS:
+        code = gated(run(['python3', str(repo / 'scripts' / name)], repo), name)
+        if code != 0:
+            return code
+    return 0
+
+
+def main() -> int:
+    args = parse_args()
     repo = Path(args.repo).resolve()
     if args.mode == 'scan':
-        summary = {
-            'repo': '<repo>',
-            'has_skills': (repo / 'skills').exists(),
-            'has_profiles': any(p.is_dir() for p in (repo / 'profiles').glob('*')) if (repo / 'profiles').exists() else False,
-            'has_plugins': any(p.is_dir() for p in (repo / 'plugins').glob('*')) if (repo / 'plugins').exists() else False,
-        }
-        print(json.dumps(summary, indent=2, sort_keys=True))
+        print(json.dumps(scan_summary(repo), indent=2, sort_keys=True))
         return 0
     if args.mode == 'validate':
-        for script in ['validate-public-safety.py', 'validate-identity-neutrality.py']:
-            res = run(['python3', str(repo / 'scripts' / script)], cwd=repo)
-            if res.returncode != 0:
-                return res.returncode
-        return 0
-    # publish mode
-    before = status(repo)
-    export_cmd = [
-        'python3', str(repo / 'scripts' / 'export-public-toolbox.py'),
-        '--hermes-home', args.hermes_home,
-        '--repo', str(repo),
-    ]
-    if args.private_profile_prefix:
-        export_cmd += ['--private-profile-prefix', args.private_profile_prefix]
-    if args.public_plugin_profile:
-        export_cmd += ['--public-plugin-profile', args.public_plugin_profile]
-    approved = os.environ.get('HERMES_TOOLBOX_APPROVED_AUTHOR_LINE')
-    if approved:
-        export_cmd += ['--approved-author-line', approved]
-    res = run(export_cmd, cwd=repo, capture=True)
-    if res.returncode != 0:
-        sys.stderr.write(res.stdout)
-        sys.stderr.write(res.stderr)
-        return res.returncode
-    after = status(repo)
-    if not after:
-        return 0
-    subprocess.check_call(['git', 'add', '.'], cwd=repo)
-    staged = subprocess.check_output(['git', 'diff', '--cached', '--name-only'], cwd=repo, text=True)
-    if not staged.strip():
-        return 0
-    subprocess.check_call(['git', 'commit', '-m', 'chore: publish public toolbox candidates'], cwd=repo)
-    subprocess.check_call(['git', 'push'], cwd=repo)
-    print('Published public toolbox candidates.')
-    return 0
+        return run_validate_mode(repo)
+    return publish(repo, args)
+
 
 if __name__ == '__main__':
     raise SystemExit(main())
