@@ -80,6 +80,16 @@ class FailureIsolationTests(TransactionCase):
         self.assert_last_known_good_preserved(self.export())
 
 
+class SymlinkFailureTests(TransactionCase):
+    def test_unsafe_source_symlink_preserves_existing_packages(self):
+        outside = self.base / 'outside-content.txt'
+        outside.write_text('benign external content\n', encoding='utf-8')
+        (self.source / 'outside-link.txt').symlink_to(outside)
+        result = self.export()
+        self.assert_last_known_good_preserved(result)
+        self.assertIn('symlink', result.stderr.lower())
+
+
 class ReplacementTests(TransactionCase):
     def test_successful_candidate_replaces_only_its_package(self):
         readme = self.source / 'README.md'

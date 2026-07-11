@@ -12,11 +12,11 @@ import yaml
 from candidate_policy import PolicyConfig, decide_plugin, plugin_candidate
 from safety_checks import skill_reference_errors, validate_public_skill
 from sanitize_rules import sanitize_public_text
+from source_safety import reject_source_symlinks
 from toolbox_common import (
     EXCLUDED_CATEGORIES, RUNTIME_PARTS, SECRET_RE, frontmatter_author, read_text_or_skip,
     tree_sha, write,
 )
-
 ALLOWED_SKILL_SUPPORT_DIRS = {'references', 'templates', 'scripts', 'assets'}
 REQUIRED_PLUGIN_FILES = ('README.md', 'plugin.yaml', '__init__.py')
 
@@ -50,6 +50,7 @@ def _stage_file(path: Path, target: Path, rel: Path, repo: Path, author: str | N
 
 def stage_tree(src: Path, staging: Path, repo: Path, author: str | None,
                private_prefix: str | None, public_plugin_profile: str | None, included) -> None:
+    reject_source_symlinks(src)
     staging.mkdir(parents=True)
     for path in sorted(src.rglob('*')):
         rel = path.relative_to(src)
