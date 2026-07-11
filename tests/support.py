@@ -1,0 +1,73 @@
+"""Shared real-environment helpers for the toolbox test suite."""
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+SCRIPTS = REPO / 'scripts'
+FIXTURES = Path(__file__).resolve().parent / 'fixtures'
+HERMES_BIN = shutil.which('hermes') or str(Path.home() / '.local' / 'bin' / 'hermes')
+HERMES_VENV_PYTHON = str(Path.home() / '.hermes' / 'hermes-agent' / 'venv' / 'bin' / 'python')
+
+
+def add_scripts_path() -> None:
+    if str(SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(SCRIPTS))
+
+
+def make_repo(base: Path) -> Path:
+    """Create a real temporary git repository carrying the current scripts."""
+    repo = base / 'repo'
+    (repo / 'skills').mkdir(parents=True)
+    (repo / 'inventory').mkdir()
+    shutil.copytree(SCRIPTS, repo / 'scripts',
+                    ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+    subprocess.run(['git', 'init', '-q'], cwd=repo, check=True)
+    return repo
+
+
+def make_home(base: Path, profile: str = 'pub-src',
+              plugins: dict[str, Path] | None = None) -> Path:
+    """Create a temporary Hermes-home-shaped source tree."""
+    home = base / 'hermes-home'
+    (home / 'skills').mkdir(parents=True)
+    plugin_root = home / 'profiles' / profile / 'plugins'
+    plugin_root.mkdir(parents=True)
+    for name, source in (plugins or {}).items():
+        shutil.copytree(source, plugin_root / name)
+        _rename_plugin(plugin_root / name, name)
+    return home
+
+
+def _rename_plugin(plugin_dir: Path, name: str) -> None:
+    manifest = plugin_dir / 'plugin.yaml'
+    text = manifest.read_text(encoding='utf-8')
+    manifest.write_text(text.replace('name: complete-plugin', f'name: {name}', 1),
+                        encoding='utf-8')
+
+
+def clean_env() -> dict[str, str]:
+    env = dict(os.environ)
+    env['PYTHONDONTWRITEBYTECODE'] = '1'
+    for key in ['HERMES_TOOLBOX_PUBLIC_SKILLS', 'HERMES_TOOLBOX_DENY_TERMS',
+                'HERMES_PRIVATE_PROFILE_PREFIX', 'HERMES_PUBLIC_PLUGIN_PROFILE',
+                'HERMES_TOOLBOX_APPROVED_AUTHOR_LINE', 'HERMES_HOME']:
+        env.pop(key, None)
+    return env
+
+
+def run_exporter(repo: Path, home: Path, *args: str) -> subprocess.CompletedProcess:
+    cmd = [sys.executable, str(repo / 'scripts' / 'export-public-toolbox.py'),
+           '--repo', str(repo), '--hermes-home', str(home), *args]
+    return subprocess.run(cmd, capture_output=True, text=True, env=clean_env())
+
+
+def tree_bytes(root: Path) -> dict[str, bytes]:
+    if not root.exists():
+        return {}
+    return {p.relative_to(root).as_posix(): p.read_bytes()
+            for p in sorted(root.rglob('*')) if p.is_file()}

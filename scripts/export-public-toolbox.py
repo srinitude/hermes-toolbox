@@ -10,8 +10,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from candidate_policy import public_skill_rels
-from export_transaction import export_plugins_swept, export_public_skills
+from candidate_policy import (
+    PolicyConfig, merged_allowlist, public_skill_rels, stale_plugin_destinations,
+)
+from export_transaction import (
+    export_public_skills, export_selected_plugins, write_change_list,
+)
 from public_manifest import write_inventory
 from toolbox_common import git_info_dir, write
 
@@ -37,20 +41,37 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--public-plugin-profile', default=os.environ.get('HERMES_PUBLIC_PLUGIN_PROFILE', ''))
     parser.add_argument('--approved-author-line', default=os.environ.get('HERMES_TOOLBOX_APPROVED_AUTHOR_LINE', ''))
     parser.add_argument('--public-skill', action='append', default=[], help='Relative skill path under $HERMES_HOME/skills to publish. Repeatable. Defaults to the repo allowlist.')
+    parser.add_argument('--public-plugin', action='append', default=[], help='Plugin name from the public plugin source profile to publish. Repeatable. Merged with the local plugin allowlist.')
+    parser.add_argument('--change-list', default='', help='Write accepted repo-relative destinations to this file, NUL-delimited.')
     return parser.parse_args()
+
+
+def selected_plugin_names(repo: Path, args: argparse.Namespace) -> tuple[str, ...]:
+    names = merged_allowlist(repo, args.public_plugin, 'public-plugin-allowlist.txt', 'public plugin')
+    if names and not args.public_plugin_profile:
+        raise SystemExit('--public-plugin-profile is required when public plugins are selected')
+    return names
 
 
 def main() -> int:
     args = parse_args()
     repo = Path(args.repo).resolve()
     hermes_home = Path(args.hermes_home).resolve()
+    plugin_names = selected_plugin_names(repo, args)
     ensure_local_info(repo, args.private_profile_prefix, args.public_plugin_profile,
                       args.approved_author_line)
-    export_public_skills(hermes_home, repo, public_skill_rels(args.public_skill),
-                         args.private_profile_prefix, args.public_plugin_profile)
-    if args.public_plugin_profile:
-        export_plugins_swept(hermes_home, repo, args.public_plugin_profile,
-                             args.private_profile_prefix)
+    accepted = export_public_skills(hermes_home, repo, public_skill_rels(repo, args.public_skill),
+                                    args.private_profile_prefix, args.public_plugin_profile)
+    cfg = PolicyConfig(public_plugins=plugin_names,
+                       public_plugin_profile=args.public_plugin_profile or None,
+                       private_profile_prefix=args.private_profile_prefix or None)
+    accepted += export_selected_plugins(hermes_home, repo, cfg)
+    stale = stale_plugin_destinations(repo, plugin_names)
+    if stale:
+        print('retaining existing unallowlisted plugin packages: ' + ', '.join(stale),
+              file=sys.stderr)
+    if args.change_list:
+        write_change_list(Path(args.change_list), repo, accepted)
     write_inventory(repo)
     subprocess.check_call(['python3', str(repo / 'scripts' / 'validate-public-safety.py')], cwd=repo)
     subprocess.check_call(['python3', str(repo / 'scripts' / 'validate-identity-neutrality.py')], cwd=repo)

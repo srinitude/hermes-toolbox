@@ -6,6 +6,7 @@ import json
 import shutil
 from pathlib import Path
 
+from candidate_policy import PolicyConfig, decide_plugin, plugin_candidate
 from sanitize_rules import sanitize_public_text
 from toolbox_common import EXCLUDED_CATEGORIES, frontmatter_author, read_text_or_skip, write
 
@@ -66,10 +67,11 @@ def copy_public_skill(source_skills: Path, repo: Path, rel: Path,
 
 
 def export_public_skills(hermes_home: Path, repo: Path, skill_rels: list[Path],
-                         private_prefix: str | None, public_plugin_profile: str | None) -> None:
+                         private_prefix: str | None, public_plugin_profile: str | None) -> list[Path]:
     source_skills = hermes_home / 'skills'
     for rel in skill_rels:
         copy_public_skill(source_skills, repo, rel, private_prefix, public_plugin_profile)
+    return [repo / 'skills' / rel for rel in skill_rels]
 
 
 def plugin_package_manifest(dst: Path, name: str) -> str:
@@ -83,14 +85,23 @@ def plugin_package_manifest(dst: Path, name: str) -> str:
     }, indent=2, sort_keys=True) + '\n'
 
 
-def export_plugins_swept(hermes_home: Path, repo: Path, public_plugin_profile: str,
-                         private_prefix: str | None) -> None:
-    source_root = hermes_home / 'profiles' / public_plugin_profile / 'plugins'
-    if not source_root.exists():
-        return
-    for plugin_dir in sorted(p for p in source_root.iterdir() if p.is_dir()):
-        if private_prefix and plugin_dir.name.startswith(private_prefix):
-            continue
-        dst = repo / 'plugins' / plugin_dir.name
-        copy_tree_public(plugin_dir, dst)
-        write(dst / 'manifest.json', plugin_package_manifest(dst, plugin_dir.name))
+def export_selected_plugins(hermes_home: Path, repo: Path, cfg: PolicyConfig) -> list[Path]:
+    exported: list[Path] = []
+    for name in cfg.public_plugins:
+        candidate = plugin_candidate(hermes_home, repo, name, cfg.public_plugin_profile)
+        decision = decide_plugin(candidate, cfg)
+        if not decision.accepted:
+            raise SystemExit(
+                f'public plugin candidate {name!r} rejected: ' + '; '.join(decision.reasons))
+        copy_tree_public(candidate.source, candidate.destination)
+        write(candidate.destination / 'manifest.json',
+              plugin_package_manifest(candidate.destination, name))
+        exported.append(candidate.destination)
+    return exported
+
+
+def write_change_list(path: Path, repo: Path, destinations: list[Path]) -> None:
+    """Record accepted repo-relative destinations, NUL-delimited, for staging."""
+    rels = sorted(dest.relative_to(repo).as_posix() for dest in destinations)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(''.join(rel + '\0' for rel in rels), encoding='utf-8')

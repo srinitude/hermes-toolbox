@@ -1,0 +1,8 @@
+name: incomplete-plugin
+kind: standalone
+version: 0.0.1
+description: Fixture plugin that is deliberately missing its implementation, docs, and tests.
+provides_tools:
+- ghost_tool
+provides_commands: []
+requires_env: []
