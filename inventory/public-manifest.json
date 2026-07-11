@@ -115,19 +115,31 @@
     },
     {
       "path": "skills/hermes-agent/hermes-config-audits/SKILL.md",
-      "sha256": "bae123790160adc214cf9a733d0d79e143c148fbeaf4eff53477ccec858fe10b"
+      "sha256": "139c708bce349ce25e7c03f3b659617e1185bf016d48d2886040fdf410ec03bb"
     },
     {
       "path": "skills/hermes-agent/honcho-memory-provider/SKILL.md",
-      "sha256": "263369e640b5597ad036e45a7366308cfbbeaf2dae872404262533e19be6cde4"
+      "sha256": "78d659d2f09fac96d569ee5c038230547fcea2a3bebd5f1f9912eb0a48c10d49"
     },
     {
       "path": "skills/hermes-agent/profile-builder/SKILL.md",
-      "sha256": "fc2986ed857aece53a7e7d287a4a0365d4ee3bf138d32cf844da98f5f80b8f0e"
+      "sha256": "a0c9fb340793df4f07abe9e74eb0e342428453188367be82703266ee56ce2129"
+    },
+    {
+      "path": "skills/research/first-party-integration-audits/SKILL.md",
+      "sha256": "9c2ffc1fd87d2349de023104132fe3ad45dce6f54d676f17ae0d832b2dcf8932"
+    },
+    {
+      "path": "skills/software-development/goal-prompt/SKILL.md",
+      "sha256": "e2d1e47c1dec024421031b6404525db2a4e175d878627654719951fb3504e3d0"
+    },
+    {
+      "path": "skills/software-development/plan-update-executor/SKILL.md",
+      "sha256": "f25d667b22b43ec1278d5498aba5eb44b6cdd59f4156c27023ada18838018a16"
     },
     {
       "path": "skills/software-development/plugin-builder/SKILL.md",
-      "sha256": "ad5dc71efa7769fefdad5f43647501ea23f68f8a2f5df27b756123250ea4e9fc"
+      "sha256": "c279f6806d47f4e63081bbf6ef1c13ab3249e22b89687318fe5ea5ff063058c0"
     },
     {
       "path": "skills/software-development/prompt-enhancer/SKILL.md",

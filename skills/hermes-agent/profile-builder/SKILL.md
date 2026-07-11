@@ -59,6 +59,32 @@ When a user reply includes a goal or desired outcome, do not leave it as convers
 
 Do not literally require the user to type `/prompt-enhancer` on every turn. The agent running this skill is responsible for applying the prompt-enhancer procedure internally to every user reply.
 
+<!-- coding-contract-propagation:start -->
+## Coding Contract Propagation
+
+Whenever a proposed profile can create, modify, refactor, review, or validate code, inherit the exact Universal Coding Contract for Code Work from `prompt-enhancer`. Treat it as a required profile primitive, not optional style guidance, and carry it through intake, goal mapping, the working spec, the final approval preview, creation, and post-creation validation.
+
+```yaml
+coding_contract:
+  applies_when: profile_can_create_modify_refactor_review_or_validate_code
+  max_file_physical_lines: 200
+  max_construct_physical_lines: 30
+  max_nesting_depth: 3
+  test_nesting_baseline: test_declaration
+  tdd_sequence: [BOOTSTRAP, RED, GREEN, REFACTOR]
+  real_tests_only: true
+  prohibited_test_doubles: [mocks, stubs, fakes, spies, placeholders]
+  test_targets: [user-facing situations, public contracts, APIs, integration boundaries, interfaces]
+  status: mapped
+```
+
+For code-capable profiles, the final approval preview must show this `coding_contract`, the real-service test path, the command that will witness RED before production code, and the language-aware validation commands for file length, construct length, and nesting. A non-coding profile may set `status: not_applicable` only with an explicit reason.
+
+During creation, execute each behavior as a vertical `BOOTSTRAP → RED → GREEN → REFACTOR` slice. Do not create or approve source/tests that use TODOs, mocks, stubs, fakes, spies, placeholders, synthetic success responses, skipped/xfail placeholders, implementation-detail assertions, or tests written for testing’s sake. Missing credentials, paid-call approval, or a real service are blockers, not permission to simulate.
+
+Before declaring profile creation complete, validate that the copied profile-local `prompt-enhancer/SKILL.md` contains exactly one `universal-coding-contract` marker pair and all hard rules. The gold-standard ledger and final verification checklist must record the contract as `mapped`, `not_applicable`, or `blocked`; silent omission fails validation.
+<!-- coding-contract-propagation:end -->
+
 ## Repository, Authorship, and Public-Documentation Defaults
 
 Every profile/config distribution created through this skill should carry the repository owner's durable authorship preferences unless the user explicitly overrides them in the final approval spec:
@@ -76,24 +102,29 @@ Completion criterion: every generated plan/final spec for a profile/config repos
 
 Every profile created through this skill must be able to use the builder workflow that produced it. Treat these as mandatory **profile-builder bootstrap skills** and include them in the new profile unless the user explicitly opts out and accepts that the new profile may not be able to run those workflows:
 
-| Skill | Source relative to active `$HERMES_HOME/skills` | Target relative to new profile `skills/` | Why it is required |
+| Skill | Source relative to the validated canonical bootstrap home's `skills/` | Target relative to new profile `skills/` | Why it is required |
 | --- | --- | --- | --- |
+| `profile-builder` | `hermes-agent/profile-builder` | `hermes-agent/profile-builder` | Makes the workflow that created the profile available inside the new profile; omitting it makes the stated self-bootstrap guarantee false. |
 | `prompt-enhancer` | `software-development/prompt-enhancer` | `software-development/prompt-enhancer` | Normalizes profile/plugin prompts, write safety, and validation thresholds. |
 | `plugin-builder` | `software-development/plugin-builder` | `software-development/plugin-builder` | Lets the new profile design and create approved Hermes plugins. |
 | `openrouter-mcp-server` | `autonomous-ai-agents/openrouter-mcp-server` | `autonomous-ai-agents/openrouter-mcp-server` | Lets the new profile perform OpenRouter MCP-backed subagent model routing when configured. |
+
+Do not blindly use the active named profile as the bootstrap source: profile-local builder copies can lag or carry profile-specific references. Resolve a canonical bootstrap home first (normally the default Hermes home), compare any active-profile copy against it, and merge intentional profile-specific support files instead of replacing them.
 
 These skills are **not** `/plugin-builder` generated plugins. They do not count as approved generated plugins, do not bypass the generated-plugin approval gate, and do not authorize copying any plugin code, plugin secrets, MCP credentials, or runtime state.
 
 ### Bootstrap skill copy rules
 
 1. Resolve the active profile home from `$HERMES_HOME` when set, otherwise `~/.hermes`.
-2. Resolve the new profile home from the profile creation result, `hermes profile show <profile-name>`, or the approved target path `~/.hermes/profiles/<profile-name>`.
-3. For each required bootstrap skill, verify the source directory contains `SKILL.md` and the frontmatter `name` matches the expected skill name.
-4. Copy only `SKILL.md` and allowed support directories: `references/`, `templates/`, `scripts/`, and `assets/`.
-5. Do not copy `.env`, auth stores, token files, logs, cache, state databases, sessions, backups, checkpoints, plugin directories, or arbitrary hidden/runtime files.
-6. If a required source skill is missing, stop and mark the profile creation as blocked until the user installs/restores the missing skill or explicitly approves proceeding without it.
-7. If the profile was created with `--clone`, `--clone-all`, or `--clone-from`, still validate these three skills in the target profile and repair any missing/stale copies from the active profile source.
-8. Show the bootstrap skill copy in the final profile spec under both `Skills` and `Writes that will occur` before asking for approval.
+2. Resolve and validate the canonical bootstrap home. In a standard multi-profile install this is `~/.hermes`, not `~/.hermes/profiles/<active-name>`. If a nonstandard home is intentional, record the chosen source and compare its builder trees before copying.
+3. Resolve the new profile home from the profile creation result, `hermes profile show <profile-name>`, or the approved target path `~/.hermes/profiles/<profile-name>`.
+4. For each required bootstrap skill, verify the source directory contains `SKILL.md` and the frontmatter `name` matches the expected skill name.
+5. Copy only `SKILL.md` and allowed support directories: `references/`, `templates/`, `scripts/`, and `assets/`.
+6. Do not copy `.env`, auth stores, token files, logs, cache, state databases, sessions, backups, checkpoints, plugin directories, or arbitrary hidden/runtime files.
+7. If a required source skill is missing, stop and mark the profile creation as blocked until the user installs/restores the missing skill or explicitly approves proceeding without it.
+8. If the profile was created with `--clone`, `--clone-all`, or `--clone-from`, still validate all four skills in the target profile and repair any missing/stale copies from the validated canonical source.
+9. When a target builder tree has profile-specific references, merge the canonical core files and preserve intentional extras; do not blindly replace the whole directory.
+10. Show the bootstrap skill copy in the final profile spec under both `Skills` and `Writes that will occur` before asking for approval.
 
 A safe copy helper may be used after the profile exists. Replace `<profile-name>` and `<profile-home>` with the approved values:
 
@@ -102,10 +133,13 @@ TARGET_PROFILE_HOME="<profile-home>" python3 - <<'PY'
 from pathlib import Path
 import os, re, shutil
 
-source_home = Path(os.environ.get('HERMES_HOME') or Path.home() / '.hermes').expanduser()
+active_home = Path(os.environ.get('HERMES_HOME') or Path.home() / '.hermes').expanduser()
+default_home = (Path.home() / '.hermes').expanduser()
+source_home = default_home if (default_home / 'skills').is_dir() else active_home
 target_home = Path(os.environ['TARGET_PROFILE_HOME']).expanduser()
 
 required = {
+    'profile-builder': Path('hermes-agent/profile-builder'),
     'prompt-enhancer': Path('software-development/prompt-enhancer'),
     'plugin-builder': Path('software-development/plugin-builder'),
     'openrouter-mcp-server': Path('autonomous-ai-agents/openrouter-mcp-server'),
@@ -153,7 +187,77 @@ for expected_name, rel in required.items():
 PY
 ```
 
-Completion criterion: all three required bootstrap skills are copied or validated in the new profile-local `skills/` tree, and any blocker is reported before declaring profile creation complete.
+Completion criterion: all four required bootstrap skills are copied or validated in the new profile-local `skills/` tree from the validated canonical source, and any blocker or intentional profile-specific merge is reported before declaring profile creation complete.
+
+## Profile-Builder Bootstrap Kanban Workflow Control-Plane Plugin
+
+Every normal profile created through this skill that should interact with Hermes Projects, Kanban boards/tasks, worker lanes, or Kanban workflow primitives should receive the reusable `kanban-workflow-control-plane` plugin by default, unless the user explicitly opts out or the target profile is excluded. Generated profiles and existing consumer profiles must assume many Projects and many boards. `/kanban-workflow` is the normal user-facing path for seeing scope, choosing a Project or board, starting work, routing tasks through the required lifecycle, and recording the strict design-gate exception only when no design-sensitive surface is in the blast radius.
+
+Treat `kanban-workflow-control-plane` as a reusable **bootstrap workflow plugin**, distinct from generated plugin recommendations, optional user-selected plugins, and skills.
+
+### Default source and target
+
+- Source plugin: `~/.hermes/profiles/non-<first-name>-plugins/plugins/kanban-workflow-control-plane/`
+- Named profile target: `~/.hermes/profiles/<profile-name>/plugins/kanban-workflow-control-plane/`
+- Default profile target: `~/.hermes/plugins/kanban-workflow-control-plane/`
+
+### Exclusions
+
+Do not install or enable this plugin by default in:
+
+- `<first-name>-plugins`
+- `non-<first-name>-plugins`
+- any profile matching `kanban-workflow-*`
+
+The `non-<first-name>-plugins` path above is the source package, not a consumer installation.
+
+### Human UX and workflow policy
+
+Generated profiles should describe `/kanban-workflow` as the normal Projects/Kanban path. The plugin binds to the host-provided active profile and rejects caller-supplied cross-profile targeting. Users select Projects by name or slug, boards by name or slug, and tasks by title or visible label. Internal IDs, work keys, run handles, context bundles, and raw JSON are implementation details unless a developer explicitly asks for diagnostics. Ambiguous labels require a short visible choice list before any mutation.
+
+Every task created or phase-routed through the control plane enters through `kanban-workflow-orchestrator` and follows:
+
+`kanban-workflow-brainstorm` → `kanban-workflow-design` → `kanban-workflow-plan` → `kanban-workflow-test` → `kanban-workflow-build` → `kanban-workflow-document` → `kanban-workflow-review` → `kanban-workflow-deploy` → `kanban-workflow-maintain`.
+
+The design phase is required unless the orchestrator records 100% certainty and evidence that no direct or indirect UI, UX, copy, accessibility, responsive, media, visual, interaction, design-system, prototype, or handoff surface is touched, and a human confirms that exact route. Missing evidence or uncertain downstream consumers require `kanban-workflow-design`.
+
+A profile-local plugin can govern its own routes and observable agent tool calls. It cannot intercept a person running `hermes kanban` from an external shell, so `/kanban`, the dashboard, and external CLI use remain advanced operator surfaces; report violations as observable drift rather than claiming universal enforcement. Model-callable route/action tools are permanently dry-run-only. Human slash-command mutations require a two-step preview and a short-lived, single-use confirmation token bound to the active profile, canonical board, resolved task, operation, and arguments.
+
+### Copy policy
+
+Copy plugin source files only. Exclude `__pycache__/`, `.pytest_cache/`, `*.pyc`, `*.pyo`, `.env`, auth/token stores, logs, sessions, caches, `state.db*`, `kanban.db*`, pairing state, backups, checkpoints, and other runtime/private data.
+
+If the target plugin directory already exists and differs from the source, create a timestamped backup before refreshing it.
+
+### Enable command
+
+Enable without built-in tool override:
+
+```bash
+hermes -p <profile-name> plugins enable kanban-workflow-control-plane --no-allow-tool-override
+```
+
+For the default profile:
+
+```bash
+hermes -p default plugins enable kanban-workflow-control-plane --no-allow-tool-override
+```
+
+Do not grant tool override unless the user explicitly approves that exception in the final profile spec.
+
+### Validation
+
+After copy and enablement, validate:
+
+1. `plugin.yaml`, `__init__.py`, and the bundled `SKILL.md` exist under the profile-local plugin tree.
+2. `hermes -p <profile-name> plugins list --json` shows the plugin enabled.
+3. A fresh-process registration probe sees `kanban_workflow_status`, `kanban_workflow_route`, `kanban_workflow_action`, `/kanban-workflow`, `pre_tool_call`, and the bundled skill.
+4. `/kanban-workflow` help/status mention many-Project/many-board scope and do not require internal handles or raw JSON.
+5. No caches, secrets, runtime state, logs, sessions, `state.db*`, `kanban.db*`, auth stores, or pairing data were copied.
+6. `plugins.entries.kanban-workflow-control-plane.allow_tool_override` is absent or false.
+7. The profile starts a fresh session—or an explicitly approved long-running gateway restart occurs—before claiming the newly enabled plugin is live in that process.
+
+Show this bootstrap workflow plugin separately from generated plugin recommendations in the final profile approval spec. Its default use is approved for eligible normal profiles, but it must still respect exclusions and safe copy/enable rules.
 
 ## Profile-Builder Bootstrap Personality Overlay
 
@@ -168,12 +272,18 @@ By default, every profile created through this skill should also receive the act
 1. Resolve the active profile home from `$HERMES_HOME` when set, otherwise `~/.hermes`.
 2. Read only non-secret config fields from the active profile `config.yaml`: `agent.personalities.validator` and `agent.system_prompt`.
 3. If `agent.personalities.validator` is present, include it in the new profile's config manifest as `agent.personalities.validator`.
-4. If the active `agent.system_prompt` exactly matches the resolved validator personality prompt, or the user explicitly asked to copy `/personality validator`, include `agent.system_prompt` set to that validator prompt in the new profile's config manifest.
+4. If the active `agent.system_prompt` exactly matches the resolved validator personality prompt, or the user explicitly asked to copy `/personality validator`, include `agent.system_prompt` set to that validator prompt in the new profile's config manifest unless an explicit approved `agent.system_prompt` entry already exists; in that case preserve the explicit prompt and copy only the validator definition.
 5. If the validator personality is missing in the source profile, mark the validator overlay as `blocked` and ask whether to proceed without it or provide/create one. Do not invent a validator prompt.
-6. If the profile was created with `--clone`, `--clone-all`, or `--clone-from`, still validate that the target profile has `agent.personalities.validator` and, when approved, `agent.system_prompt` set to the resolved validator prompt; repair missing/stale values from the active source config.
+6. If the profile was created with `--clone`, `--clone-all`, or `--clone-from`, still validate that the target profile has `agent.personalities.validator` and that `agent.system_prompt` is either the resolved validator prompt or the explicit approved `agent.system_prompt` default; repair missing/stale values from the active source config only within the approved manifest.
 7. Show the validator overlay copy separately from `SOUL.md`, bootstrap skills, optional skills, and generated plugins in the final approval spec and in `Writes that will occur`.
 
 Completion criterion: the target profile's config contains the approved `agent.personalities.validator` definition and the approved `agent.system_prompt` overlay, or the final report lists an explicit blocker. The target profile's `SOUL.md` remains profile-specific and is not copied wholesale from the source profile.
+
+## Kanban Workflow Profile Orchestration
+
+When a profile-building request involves phase-gated work, named worker profiles, durable multi-agent coordination, context handoffs, human review gates, or Hermes Kanban, load `references/kanban-workflow-profile-orchestration.md` before drafting the final profile spec. Treat each phase as a first-class profile primitive: identity, model, config, toolsets, memory, automation, security, performance, validation, and portability must all be mapped or explicitly skipped/blocked. Prefer official profile distributions and `hermes profile install` over manual profile directory copying.
+
+When the profile represents a business, creator operation, product portfolio, or brand that may spawn multiple distinct operating units, also load `references/portfolio-channel-kanban-separation.md`. Use a portfolio/business Project + board for entity-wide management, ideation, validation, and rollups, and separate unit/channel/product Projects + boards for decided operating units. Validate the split against official Hermes Kanban board isolation semantics, live `hermes project`/`hermes kanban` CLI output, and any relevant external product/portfolio operating best practices before presenting the final spec.
 
 ## Operating Mode
 
@@ -281,6 +391,10 @@ capabilities:
   skills: []                   # user-selected profile skills beyond mandatory builder bootstrap skills
   profile_builder_bootstrap_skills:
     required:
+      - name: profile-builder
+        source_relative_path: hermes-agent/profile-builder
+        target_relative_path: hermes-agent/profile-builder
+        status: pending | copied | already_present | merged | blocked
       - name: prompt-enhancer
         source_relative_path: software-development/prompt-enhancer
         target_relative_path: software-development/prompt-enhancer
@@ -293,11 +407,25 @@ capabilities:
         source_relative_path: autonomous-ai-agents/openrouter-mcp-server
         target_relative_path: autonomous-ai-agents/openrouter-mcp-server
         status: pending | copied | already_present | blocked
-    source_home: active_profile_hermes_home
+    source_home: validated_canonical_bootstrap_home
+    active_profile_comparison: required_for_builder_tree_drift
     target_home: "~/.hermes/profiles/<profile-name>"
-    copy_policy: copy SKILL.md plus references/templates/scripts/assets only
+    copy_policy: copy SKILL.md plus references/templates/scripts/assets only; merge intentional profile-specific support files
+  profile_builder_bootstrap_plugins:
+    required:
+      - name: kanban-workflow-control-plane
+        source_preference:
+          - ~/.hermes/profiles/non-<first-name>-plugins/plugins/kanban-workflow-control-plane
+        target_relative_path: plugins/kanban-workflow-control-plane
+        enable_command: hermes -p <profile-name> plugins enable kanban-workflow-control-plane --no-allow-tool-override
+        exclusions: [<first-name>-plugins, non-<first-name>-plugins, kanban-workflow-*]
+        status: pending | copied | already_present | enabled | skipped_excluded | blocked
+        ux_contract: one default path, many Projects, many boards, human labels, hidden internal handles, orchestrator-led ordered phase gates
+    copy_policy: source files only; exclude secrets, caches, sessions, logs, runtime databases, pairing state, backups, and checkpoints
+    tool_override_allowed: false
   mcp_servers: []
-  plugins: []                  # approved plugins to include in the profile
+
+  plugins: []                  # additional approved plugins to include in the profile
   plugin_candidates:
     scan_required: true         # true once profile goals/capability needs are known
     scan_paths: []              # plugin roots inspected read-only
@@ -324,7 +452,7 @@ automation:
   webhooks: []
 
 security:
-  approvals_mode: manual          # manual, smart, off
+  approvals_mode: off             # manual, smart, off; user-requested default bypasses approval prompts
   yolo_default: false
   pii_redaction: false
   secret_handling_notes: []
@@ -382,6 +510,16 @@ plugin_candidate:
     blockers: []
   recommendation: include | consider | skip | blocked
 ```
+
+## External Repository Context Protocol
+
+When the user says an external repository should guide a new profile's conversations, identity, workspace, or future plugins, treat the repo as a first-class profile primitive instead of vague background context. If the user asks to read all content, verify the exact revision and read every tracked file before finalizing the spec. Use `references/external-repo-context-profile-customization.md` for the byte-for-byte manifest pattern, repo-to-primitive mapping, approved write shape (`workspace clone` + concise `.hermes.md` + profile-local class skill/reference), and pitfalls such as internal corpus mismatches.
+
+Completion criterion: the final approval preview records the repo URL/revision, file-count/read validation, known corpus caveats, intended workspace location, and how the repo context is represented without dumping raw content into `SOUL.md`.
+
+## Humanized Writing / Detector-Loop Profiles
+
+When a profile is for humanized writing, release-readiness checks, AI-detection/plagiarism loops, or self-updating writing rules, load `references/humanized-writing-profile-pattern.md` before drafting the final spec. Treat the starting rules, labeled writing corpus, detector APIs, future plugin-builder workflow, and rule-learning surface as separate primitives. If the user's `starting-rules` are truncated or summarized by the UI, block exact merging and ask whether to proceed with reconstructed rules or wait for the full source text.
 
 ## Generated Plugin Discovery Protocol
 
@@ -452,6 +590,9 @@ Completion criterion: recommendations are evidence-backed and user-approved, not
 - Every non-default config change must become one `configuration.values.set[]` manifest entry.
 - Every high-impact default that the user explicitly accepts should be listed in `configuration.values.leave_default[]` with a short reason.
 - Secret-bearing values must use `secret_ref` or `manual_user_action`; never place raw API keys, OAuth tokens, passwords, or bearer tokens in the manifest.
+- For every new profile, include `agent.system_prompt` as a non-secret manifest entry set exactly to: `You are a Hermes Agent expert focused on ideating, executing, and validating the correct answer. Don't write/edit any files within directories that users of Hermes Agent aren't allowed to touch. Use adversarial review to define an objective validation threshold that proves correctness beyond doubt. Pinpoint the essence of the user's request, convert all unknowns into knowns, and enumerate every problem to solve. Start open-minded across all available tools, then narrow to those you're medium-to-high confident are relevant. Don't continue working down a line of thought or action if you know that it is objectively and provably wrong. Validate your work against official documentation, codebases and first-party sources. Do the minimum work and use the fewest tokens needed to hit the validation threshold. Stop immediately once it's met. Only do what's necessary.` Apply it with `hermes -p <profile> config set agent.system_prompt <prompt>` and validate the target profile config directly.
+- For every new profile, include `approvals.mode` as a non-secret manifest entry set to `off` unless the user explicitly requests `manual` or `smart`. Apply it with `hermes -p <profile> config set approvals.mode off`; Hermes writes this as YAML `false`, and the first-party approval runtime normalizes that value back to approval mode `off`. Validate the target profile config via runtime normalization, not by requiring a quoted string.
+- For every new profile, include these non-secret paste-composer settings as default manifest entries unless the user explicitly opts into paste-token collapse/truncation: `paste_collapse_threshold=0`, `paste_collapse_threshold_fallback=0`, and `paste_collapse_char_threshold=0`. Apply them with `hermes -p <profile> config set <key> 0` and validate the target profile config directly.
 - Prefer `hermes -p <profile> config set <key> <value>` for non-secret values.
 - Prefer official setup/auth/model/tool/MCP/gateway/cron flows when a setting is better managed by a purpose-built command.
 - If a key is dynamic or plugin-defined, record the source that proved the key exists (`skill`, plugin docs, `hermes tools`, MCP server docs, or current profile config).
@@ -481,6 +622,7 @@ Required criteria:
 - [ ] Dedicated profile rationale: the spec explains why these outcomes should be achieved by the new profile rather than relying on the default profile.
 - [ ] Goal mapping: every stated goal maps across the full Hermes profile primitive set or each non-applicable/blocked primitive is explicitly marked with a reason.
 - [ ] Goal validation: every mapped goal has at least one validation command, smoke test, or observable success criterion.
+- [ ] Coding contract: every code-capable goal maps the `coding_contract` limits, real-test path, witnessed RED command, and BOOTSTRAP/RED/GREEN/REFACTOR validation, or is explicitly not applicable/blocked.
 - [ ] Isolation: profile state will live under its own `HERMES_HOME`.
 - [ ] No core edits: customization uses profile/config/skills/SOUL/context surfaces only.
 - [ ] Model: provider, model, and auth path are defined or a setup blocker is explicit.
@@ -539,8 +681,8 @@ configuration:
   mode: guided
   changes:
     - key: approvals.mode
-      value: manual
-      why: Keep shell actions user-approved.
+      value: off
+      why: User requested approval prompts disabled by default for this profile family.
       setter: hermes_config
     - key: terminal.backend
       value: docker
@@ -578,8 +720,12 @@ Use safe defaults when the user does not care:
 
 ```text
 creation_method: clone if user wants current credentials/tools; blank if they want isolation
-approvals_mode: manual
+approvals_mode: off
+agent.system_prompt: "<requested Hermes Agent expert validation prompt; exact text from Configuration Manifest Rules>"
 compression_enabled: true
+paste_collapse_threshold: 0              # preserve full multi-line paste text in CLI/TUI composers; no paste-token collapse
+paste_collapse_threshold_fallback: 0     # same safeguard for terminals without bracketed paste support
+paste_collapse_char_threshold: 0         # disable long single-line paste collapse unless the user explicitly opts in
 memory: enabled but compact
 home_mode: auto
 terminal.backend: local unless sandbox requested
@@ -634,13 +780,15 @@ Use this format:
 - Enabled tools: ...
 - Skills: ...
 - Profile-builder bootstrap skills copied into the new profile:
+  - `profile-builder` → `~/.hermes/profiles/<profile-name>/skills/hermes-agent/profile-builder/`
   - `prompt-enhancer` → `~/.hermes/profiles/<profile-name>/skills/software-development/prompt-enhancer/`
   - `plugin-builder` → `~/.hermes/profiles/<profile-name>/skills/software-development/plugin-builder/`
   - `openrouter-mcp-server` → `~/.hermes/profiles/<profile-name>/skills/autonomous-ai-agents/openrouter-mcp-server/`
 - Profile-builder bootstrap personality overlay:
   - `/personality validator` copied from active profile config into `agent.personalities.validator`
-  - `agent.system_prompt` set to the resolved validator prompt when approved
+  - `agent.system_prompt` set to the approved explicit profile prompt, or to the resolved validator prompt when no explicit prompt override exists
   - `SOUL.md` remains newly customized for this profile and is not copied wholesale
+
 - Memory: ...
 - Gateway/cron/MCP/plugins: ...
 - Generated plugin review:
@@ -671,6 +819,7 @@ Use this format:
 - Secret/user-action requirements: ...
 - Validation command for each config category: ...
 - Goal coverage status: every goal has every primitive category mapped, marked not applicable/skipped, or blocked; no unmapped primitives remain.
+- Coding contract: mapped with the 200-line file limit, 30-line construct limit, depth-3 nesting limit, test-declaration baseline, real-service test path, witnessed RED command, and BOOTSTRAP/RED/GREEN/REFACTOR validation | not applicable with reason | blocked with exact blocker.
 - Writes that will occur: ...
 - Validation commands that will run: ...
 - Known blockers/assumptions: ...
@@ -683,6 +832,7 @@ The user must be able to copy the final config preview and understand exactly wh
 The final spec must distinguish between plugins Hermes recommends and plugins the user has approved. Recommended plugins remain suggestions until the user explicitly approves them for inclusion. If no `/plugin-builder` generated plugins were found or none are a good fit, state that clearly and proceed without plugin inclusion.
 
 The final spec must also show the mandatory profile-builder bootstrap skills separately from optional skills and generated plugins. These bootstrap skills are approved as part of profile creation, but they must never be described as plugin approvals and must never cause plugin directories, secrets, MCP OAuth tokens, logs, caches, or runtime state to be copied.
+
 
 If the user says yes, approved, proceed, create it, or equivalent, enter creation mode.
 
@@ -785,7 +935,7 @@ Examples:
 hermes -p <profile-name> config set terminal.cwd /absolute/path
 hermes -p <profile-name> config set terminal.backend local
 hermes -p <profile-name> config set terminal.home_mode auto
-hermes -p <profile-name> config set approvals.mode manual
+hermes -p <profile-name> config set approvals.mode off
 ```
 
 Use Docker/Modal/Daytona/Singularity/SSH when sandboxing is required.
@@ -811,19 +961,20 @@ Then copy or validate the `/personality validator` overlay when approved or when
 1. Confirm the final approved spec listed `/personality validator` under the profile-builder bootstrap personality overlay.
 2. Read only `agent.personalities.validator` and `agent.system_prompt` from the active profile config.
 3. Apply the validator definition to the target profile config as `agent.personalities.validator`.
-4. Apply `agent.system_prompt` to the resolved validator prompt when the final spec approved the overlay as active.
+4. Apply `agent.system_prompt` to the approved explicit profile prompt when present; otherwise apply the resolved validator prompt when the final spec approved the overlay as active.
 5. Validate the target profile config contains the validator definition and active system prompt, or report the exact blocker.
 
 First ensure the mandatory profile-builder bootstrap skills are present in the new profile:
 
-1. Confirm the final approved spec listed `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server` under profile-builder bootstrap skills.
+1. Confirm the final approved spec listed `profile-builder`, `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server` under profile-builder bootstrap skills.
 2. Run the bootstrap skill copy protocol from the **Profile-Builder Bootstrap Skills** section.
 3. Mark each bootstrap skill status as `copied`, `already_present`, or `blocked` in `capabilities.profile_builder_bootstrap_skills.required[]`.
 4. If any bootstrap skill is blocked, stop profile creation validation and report the exact missing source or target-path blocker.
 
 Then configure any additional approved user-selected skills. Use `skill_manage` for profile-local skill creation or `hermes -p <profile-name> skills install ...` for known hub skills. Do not edit bundled repo skills for normal customization.
 
-### 6. Configure memory, gateway, cron, MCP, and plugins only if approved
+
+### 6. Configure memory, gateway, cron, MCP, and additional plugins only if approved
 
 Use official commands:
 
@@ -867,6 +1018,7 @@ python3 - <<'PY'
 from pathlib import Path
 profile_home = Path('~/.hermes/profiles/<profile-name>').expanduser()
 expected = {
+    'profile-builder': Path('hermes-agent/profile-builder'),
     'prompt-enhancer': Path('software-development/prompt-enhancer'),
     'plugin-builder': Path('software-development/plugin-builder'),
     'openrouter-mcp-server': Path('autonomous-ai-agents/openrouter-mcp-server'),
@@ -880,7 +1032,8 @@ for name, rel in expected.items():
 PY
 ```
 
-Completion criterion: `hermes -p <profile-name> skills list` and direct file validation both show `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server`, or the final report lists an explicit blocker.
+Completion criterion: `hermes -p <profile-name> skills list` and direct file validation both show `profile-builder`, `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server`, or the final report lists an explicit blocker.
+
 
 For the profile-builder bootstrap personality overlay, validate the target config directly without printing unrelated config or secrets:
 
@@ -894,9 +1047,11 @@ agent = cfg.get('agent') or {}
 validator = (agent.get('personalities') or {}).get('validator')
 assert validator, 'missing agent.personalities.validator'
 resolved = validator.get('system_prompt', '') if isinstance(validator, dict) else str(validator)
+approved_explicit = "You are a Hermes Agent expert focused on ideating, executing, and validating the correct answer. Don't write/edit any files within directories that users of Hermes Agent aren't allowed to touch. Use adversarial review to define an objective validation threshold that proves correctness beyond doubt. Pinpoint the essence of the user's request, convert all unknowns into knowns, and enumerate every problem to solve. Start open-minded across all available tools, then narrow to those you're medium-to-high confident are relevant. Don't continue working down a line of thought or action if you know that it is objectively and provably wrong. Validate your work against official documentation, codebases and first-party sources. Do the minimum work and use the fewest tokens needed to hit the validation threshold. Stop immediately once it's met. Only do what's necessary."
+active = agent.get('system_prompt')
 assert resolved, 'validator personality resolves to empty prompt'
-assert agent.get('system_prompt') == resolved, 'agent.system_prompt is not the validator prompt'
-print('OK /personality validator overlay active')
+assert active in {resolved, approved_explicit}, 'agent.system_prompt is neither the validator prompt nor the approved explicit default prompt'
+print('OK /personality validator definition present and active system prompt validated')
 PY
 ```
 
@@ -943,7 +1098,7 @@ The profile is complete only when:
 1. The profile exists and reports the expected path/name.
 2. A smoke chat succeeds or the only blocker is missing user-controlled auth.
 3. Tool list output matches the approved spec.
-4. The profile-builder bootstrap skills `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server` are present under the new profile's `skills/` tree and visible to `hermes -p <profile-name> skills list`, or a missing source/auth/setup blocker is explicitly reported.
+4. The profile-builder bootstrap skills `profile-builder`, `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server` are present under the new profile's `skills/` tree and visible to `hermes -p <profile-name> skills list`, or a missing source/auth/setup blocker is explicitly reported.
 5. Prompt-size output is reviewed and not obviously bloated for the intended model.
 6. `doctor`/`config check` have no unhandled blockers.
 7. Any enabled gateway/cron/MCP features have matching validation evidence.
@@ -960,7 +1115,7 @@ Allowed profile-builder write surfaces after approval:
 - `~/.hermes/profiles/<profile-name>/SOUL.md`
 - `~/.hermes/profiles/<profile-name>/skills/**` through `skill_manage` or `hermes skills`
 - `~/.hermes/profiles/<profile-name>/cron/**` through `cronjob` or `hermes cron`
-- `~/.hermes/profiles/<profile-name>/plugins/**` when explicitly approved
+- `~/.hermes/profiles/<profile-name>/plugins/**` only when explicitly approved in the final profile spec
 - Project-local `.hermes.md`/`AGENTS.md` only when the user explicitly wants project context files
 
 Prohibited or clarification-required surfaces:
@@ -999,14 +1154,22 @@ Prohibited or clarification-required surfaces:
 23. **Recommending plugins that duplicate simpler primitives.** If a built-in toolset, MCP server, skill, or config setting satisfies the goal more simply, prefer the simpler primitive and skip the plugin.
 24. **Conflating a gateway with a task transport.** A gateway surface (Telegram, Slack, Discord, etc.) may be only the user's control/review/reminder channel. Do not assume it is also the outbound transport for domain actions (family messages, customer emails, social posts, work notifications). When the user distinguishes them, model the gateway as an approval/control primitive and mark domain delivery as blocked until an approved sender plugin/tool exists.
 25. **Treating standard Honcho profile-awareness as strict privacy isolation.** Standard Honcho multi-profile setup shares a workspace/user peer and gives each profile its own AI peer. For sensitive profiles (family, health, legal, finance), explicitly ask whether the user wants strict isolation: separate Honcho workspace, user peer, and AI peer in the target profile-local `honcho.json`, then validate those exact values with `hermes -p <profile> honcho status`.
-26. **Forgetting profile-builder bootstrap skills.** Blank profiles and `--no-skills` profiles may not receive local helper skills automatically. Always copy or validate `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server` into the new profile-local `skills/` tree before declaring profile creation complete.
+26. **Forgetting profile-builder bootstrap skills.** Blank profiles and `--no-skills` profiles may not receive local helper skills automatically. Always copy or validate `profile-builder`, `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server` into the new profile-local `skills/` tree before declaring profile creation complete.
 27. **Copying SOUL to preserve validator behavior.** `/personality validator` is a config overlay (`agent.personalities.validator` plus `agent.system_prompt`), not the profile's durable identity. Copy the validator overlay by default, but write a fresh profile-specific `SOUL.md` every time.
 28. **Assuming `terminal.cwd` forces local CLI tool cwd.** For the local terminal backend, Hermes CLI intentionally uses the process launch directory (`os.getcwd()`); `terminal.cwd` is still useful for config display/gateway/cron bridging, but `hermes -p <profile> chat` launched from another directory may run terminal tools there. If a profile needs an alias with a fixed operational workspace, patch or recreate the generated wrapper so it `cd <workspace>` before `exec hermes -p <profile> "$@"`, then validate with a `pwd` smoke test.
+29. **Using one board for a portfolio plus all decided units.** When a profile manages a business or creator portfolio that will spawn distinct channels/products/units, keep the portfolio board for ideation, validation, governance, and rollups; create separate approval-gated boards for decided units. Hermes boards are hard isolation boundaries and do not support cross-board links, so specify rollup/context-reference behavior instead of pretending dependencies can link across boards.
+
+30. **Weak model-route locks in specialized profiles.** When the user names an exact provider/model route such as `openai-codex/gpt-5.5`, treat that as a runtime invariant, not just prose. Set both `model.provider` and `model.default`, add the invariant to SOUL/context/skill references when those are in scope, validate `config.yaml` directly, and make smoke commands pass the explicit provider/model flags where supported. Also scan generated profile-local artifacts for forbidden aliases named by the user (for example OpenRouter or slash-style model IDs) so docs, plugins, scripts, and validation prompts cannot drift back to the wrong route.
+
+31. **Assuming pasted secrets became configured secrets.** If the user includes a raw token while approving profile creation, treat it as secret material and never echo or write it into specs, skills, SOUL, reports, or plugin code. Validate only key presence by name through official env/auth/setup surfaces. If the target profile runtime cannot see the secret afterward, report it as a setup blocker (`secret_ref:<NAME>` still needs configuration) rather than claiming external workflows such as HF Jobs or detector calls are ready.
 
 ## Verification Checklist
 
 - [ ] `prompt-enhancer` loaded or already present before profile-builder loop begins.
 - [ ] Running profile spec maintained and updated after each user reply.
+- [ ] Code-capable profiles include the complete `coding_contract` in the working spec and final approval preview; non-coding profiles mark it not applicable with a reason.
+- [ ] The copied profile-local `prompt-enhancer` contains exactly one universal coding-contract marker pair and every hard rule before profile completion is claimed.
+- [ ] Real behavior/service tests witness RED before production code and target user-facing situations, public contracts, APIs, integration boundaries, or interfaces without test doubles or implementation-detail assertions.
 - [ ] User goals, desired outcomes, success measures, and non-goals are captured in the running spec.
 - [ ] Every user goal is mapped across the Hermes profile primitive set or each primitive is explicitly `not_applicable`, `skipped`, or `blocked`.
 - [ ] The spec explains why the new profile, not the default profile, is responsible for the stated outcomes.
@@ -1017,7 +1180,7 @@ Prohibited or clarification-required surfaces:
 - [ ] No plugin secrets/runtime files were copied into the profile.
 - [ ] Final approval preview listed the mandatory profile-builder bootstrap skills separately from optional skills and generated plugins.
 - [ ] Final approval preview listed the `/personality validator` overlay separately from SOUL, skills, generated plugins, and optional profile behavior.
-- [ ] `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server` were copied or verified under the new profile's `skills/` tree.
+- [ ] `profile-builder`, `prompt-enhancer`, `plugin-builder`, and `openrouter-mcp-server` were copied or verified under the new profile's `skills/` tree.
 - [ ] `/personality validator` was copied or verified in profile-local config as `agent.personalities.validator` and active `agent.system_prompt`, or a blocker/explicit skip was reported.
 - [ ] Bootstrap skill copy copied only `SKILL.md` and allowed support directories, not secrets, plugins, logs, caches, sessions, or runtime state.
 - [ ] `hermes -p <profile-name> skills list` or direct `SKILL.md` validation proves all three bootstrap skills are available in the new profile, or blockers are reported honestly.

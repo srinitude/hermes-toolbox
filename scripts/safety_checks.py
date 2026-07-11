@@ -12,6 +12,7 @@ from toolbox_common import (
 )
 
 MIN_PUBLIC_SKILL_LINES = 40
+SUPPORT_REF_RE = re.compile(r'\b(?:references|templates|scripts|assets)/[A-Za-z0-9][A-Za-z0-9._/-]*')
 
 
 def approved_lines(repo: Path) -> set[str]:
@@ -96,6 +97,19 @@ def validate_public_skill(rel: str, text: str) -> list[str]:
         errors.append(f'{rel}: missing a "When to Use"-style section')
     if not headings:
         errors.append(f'{rel}: missing level-2 body sections')
+    return errors
+
+
+def skill_reference_errors(rel: str, pkg_dir: Path) -> list[str]:
+    """Every extension-bearing support path named in SKILL.md must exist in the package."""
+    text = (pkg_dir / 'SKILL.md').read_text(encoding='utf-8')
+    errors = []
+    for token in sorted(set(SUPPORT_REF_RE.findall(text))):
+        path = token.rstrip('.')
+        if '.' not in path.rsplit('/', 1)[-1]:
+            continue  # directory or prose mention, not a file reference
+        if not (pkg_dir / path).is_file():
+            errors.append(f'{rel}: referenced support file is missing from the package: {path}')
     return errors
 
 

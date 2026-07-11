@@ -10,21 +10,19 @@ from pathlib import Path
 import yaml
 
 from candidate_policy import PolicyConfig, decide_plugin, plugin_candidate
-from safety_checks import validate_public_skill
+from safety_checks import skill_reference_errors, validate_public_skill
 from sanitize_rules import sanitize_public_text
 from toolbox_common import (
-    EXCLUDED_CATEGORIES, SECRET_RE, frontmatter_author, read_text_or_skip, tree_sha, write,
+    EXCLUDED_CATEGORIES, RUNTIME_PARTS, SECRET_RE, frontmatter_author, read_text_or_skip,
+    tree_sha, write,
 )
 
 ALLOWED_SKILL_SUPPORT_DIRS = {'references', 'templates', 'scripts', 'assets'}
-SKIPPED_TREE_PARTS = {
-    '.env', 'auth.json', 'mcp-tokens', 'memories', 'sessions', 'logs', 'cache', 'pairing',
-}
 REQUIRED_PLUGIN_FILES = ('README.md', 'plugin.yaml', '__init__.py')
 
 
 def _plugin_file_included(rel: Path) -> bool:
-    if set(rel.parts) & SKIPPED_TREE_PARTS or '__pycache__' in rel.parts:
+    if set(rel.parts) & RUNTIME_PARTS or '__pycache__' in rel.parts:
         return False
     if rel.suffix in {'.pyc', '.pyo'} or rel.as_posix() == 'manifest.json':
         return False
@@ -111,8 +109,9 @@ def _skill_staging_errors(staging: Path, rel: Path) -> list[str]:
     skill_md = staging / 'SKILL.md'
     if not skill_md.is_file():
         return [f'{rel}: staged skill is missing SKILL.md']
-    errors = validate_public_skill((Path('skills') / rel / 'SKILL.md').as_posix(),
-                                   skill_md.read_text(encoding='utf-8'))
+    rel_md = (Path('skills') / rel / 'SKILL.md').as_posix()
+    errors = validate_public_skill(rel_md, skill_md.read_text(encoding='utf-8'))
+    errors += skill_reference_errors(rel_md, staging)
     return errors + staged_text_errors(staging)
 
 
