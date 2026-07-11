@@ -9,10 +9,12 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-
+sys.dont_write_bytecode = True
+os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from candidate_policy import read_allowlist  # noqa: E402
+from publisher_transaction import PublisherTransaction, stage_paths  # noqa: E402
 from toolbox_common import git_info_dir  # noqa: E402
 
 COMMIT_MESSAGE = 'chore: publish public toolbox candidates'
@@ -68,6 +70,9 @@ def worktree_error(repo: Path) -> str | None:
         return 'target is not a git worktree'
     if status.stdout.strip():
         return 'starting worktree is dirty; refusing to publish'
+    ignored = git(repo, 'clean', '-ndx')
+    if ignored.returncode != 0 or ignored.stdout.strip():
+        return 'starting worktree has ignored or untracked residue; refusing to publish'
     origin = git(repo, 'rev-parse', '--verify', '--quiet', 'origin/main')
     if origin.returncode != 0:
         return 'origin/main is not resolvable in the target worktree'
@@ -133,12 +138,10 @@ def accepted_entries(change_list: Path) -> list[str]:
 
 
 def stage_accepted(repo: Path, entries: list[str]) -> int:
-    for rel in [*entries, *INVENTORY_FILES]:
-        if not (repo / rel).exists():
-            continue
-        added = git(repo, 'add', '--', rel)
-        if added.returncode != 0:
-            return fail(f'could not stage accepted path {rel}: {added.stderr.strip()}')
+    try:
+        stage_paths(repo, [*entries, *INVENTORY_FILES])
+    except RuntimeError as exc:
+        return fail(str(exc))
     return 0
 
 
@@ -157,16 +160,21 @@ def publish(repo: Path, args: argparse.Namespace) -> int:
     error = worktree_error(repo) or policy_error(repo, args)
     if error:
         return fail(error)
-    with tempfile.TemporaryDirectory(prefix='toolbox-publish-') as tmp:
-        change_list = Path(tmp) / 'accepted.lst'
-        code = export_candidates(repo, args, change_list)
-        code = code or run_validation_packet(repo)
-        code = code or stage_accepted(repo, accepted_entries(change_list))
-    if code != 0:
+    with PublisherTransaction(repo) as transaction:
+        with tempfile.TemporaryDirectory(prefix='toolbox-publish-') as tmp:
+            change_list = Path(tmp) / 'accepted.lst'
+            code = export_candidates(repo, args, change_list)
+            code = code or run_validation_packet(repo)
+            code = code or stage_accepted(repo, accepted_entries(change_list))
+        if code != 0:
+            return code
+        if not git(repo, 'diff', '--cached', '--name-only').stdout.strip():
+            transaction.finish()
+            return 0
+        code = commit_and_push(repo)
+        if code == 0:
+            transaction.finish()
         return code
-    if not git(repo, 'diff', '--cached', '--name-only').stdout.strip():
-        return 0
-    return commit_and_push(repo)
 
 
 def run_validate_mode(repo: Path) -> int:

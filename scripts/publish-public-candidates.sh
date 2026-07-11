@@ -2,6 +2,7 @@
 set -euo pipefail
 
 export PATH="/usr/local/bin:/usr/bin:/bin:${PATH:-}"
+export PYTHONDONTWRITEBYTECODE=1
 
 REPO="${HERMES_TOOLBOX_REPO:-$HOME/hermes-toolbox}"
 HERMES_HOME_DIR="${HERMES_HOME:-$HOME/.hermes}"
@@ -15,15 +16,20 @@ fail() {
 }
 
 require_public_visibility() {
-  local origin_url slug visibility
+  local origin_url slug visibility github_at scp_prefix ssh_prefix
+  github_at='@'
+  scp_prefix="git${github_at}github.com:"
+  ssh_prefix="ssh://git${github_at}github.com/"
   origin_url="$(git -C "$REPO" remote get-url origin)" || fail "no origin remote is configured"
   case "$origin_url" in
-    *github.com*) ;;
-    *) return 0 ;;
+    https://github.com/*) slug="${origin_url#https://github.com/}" ;;
+    "$scp_prefix"*) slug="${origin_url#"$scp_prefix"}" ;;
+    "$ssh_prefix"*) slug="${origin_url#"$ssh_prefix"}" ;;
+    *) fail "unsupported origin; public visibility cannot be verified" ;;
   esac
-  slug="${origin_url#*github.com}"
-  slug="${slug#[:/]}"
   slug="${slug%.git}"
+  [[ "$slug" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] \
+    || fail "invalid GitHub repository slug derived from origin"
   visibility="$(gh repo view "$slug" --json visibility --jq .visibility 2>/dev/null)" \
     || fail "public repository visibility check failed for $slug"
   [ "$visibility" = "PUBLIC" ] || fail "repository $slug visibility is not PUBLIC"
