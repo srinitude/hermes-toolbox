@@ -55,7 +55,7 @@ A standard Hermes named profile should keep its profile home under the official 
 The user may still want the profile's operational working directory elsewhere, e.g.:
 
 ```yaml
-terminal.cwd: <private-term>/care-family
+terminal.cwd: <private-term>/<private-term>
 ```
 
 Keep these concepts distinct in final specs. Do not treat a desired working directory as a custom `HERMES_HOME` unless the user explicitly chooses a custom-home approach.

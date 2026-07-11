@@ -9,10 +9,10 @@ Use a two-level board model:
 1. **Portfolio / business board** — manages the entity at large: intake, ideation, research, validation, strategy, approval gates, plugin roadmap, and cross-unit rollups.
 2. **Unit / channel / product boards** — one isolated board per decided operating unit: execution, production, delivery, analytics, team/vendor operations, and unit-specific improvement loops.
 
-For Obscurine-style creator businesses:
+For <private-term>-style creator businesses:
 
-- `obscurine` = portfolio board for Obscurine management, channel ideation, niche research, competitor research, validation, channel thesis work, go/no-go approvals, plugin planning, and cross-channel rollups.
-- `obscurine-channel-<channel-slug>` = one board per approved/decided channel for channel operations: topic bank, packaging, script, originality, voiceover, editing, production QC, upload-readiness, analytics, and team ops.
+- `<private-term>` = portfolio board for <private-term> management, channel ideation, niche research, competitor research, validation, channel thesis work, go/no-go approvals, plugin planning, and cross-channel rollups.
+- `<private-term>-channel-<channel-slug>` = one board per approved/decided channel for channel operations: topic bank, packaging, script, originality, voiceover, editing, production QC, upload-readiness, analytics, and team ops.
 
 ## Why this split is justified
 
@@ -57,19 +57,19 @@ unit_board_pattern:
   display_name: "<Business Name> <Unit Type> — <Unit Name>"
 ```
 
-For Obscurine:
+For <private-term>:
 
 ```yaml
 portfolio_project:
-  name: Obscurine
-  slug: <first-name>-obscurine
-  bound_board: obscurine
+  name: <private-term>
+  slug: <first-name>-<private-term>
+  bound_board: <private-term>
 
 channel_project_pattern:
-  name: "Obscurine — <Channel Name>"
-  slug: "obscurine-channel-<channel-slug>"
-  primary_folder: "<private-term>/hermes-profiles/<private-term>/<first-name>-obscurine/channels/<channel-slug>"
-  bound_board: "obscurine-channel-<channel-slug>"
+  name: "<private-term> — <Channel Name>"
+  slug: "<private-term>-channel-<channel-slug>"
+  primary_folder: "<private-term>/hermes-profiles/<private-term>/<first-name>-<private-term>/channels/<channel-slug>"
+  bound_board: "<private-term>-channel-<channel-slug>"
 ```
 
 ## Plugin primitive implications
