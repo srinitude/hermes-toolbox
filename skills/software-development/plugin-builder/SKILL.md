@@ -381,6 +381,8 @@ Completion criterion: every hook/command has a clear purpose and can fail withou
 - Provider/model override for `ctx.llm` requires explicit `plugins.entries.<plugin>.llm.*` trust config.
 - Built-in tool override requires explicit `plugins.entries.<plugin>.allow_tool_override: true` for non-bundled plugins.
 
+For any built-in override, load `references/exact-tool-override-validation.md`. Prove the absent-grant negative control, exact handler-module ownership, original-handler preservation, exact schema and native `check_fn` identity, context-specific model visibility, and installed-wheel behavior through separate fresh processes. Registry membership or “handler is not native” is insufficient evidence.
+
 Completion criterion: no secret or trust boundary is implicit.
 
 ### 9. Performance gate
@@ -635,6 +637,7 @@ After creation:
 - [ ] `HERMES_PLUGINS_DEBUG=1 hermes plugins list` shows expected discovery/load state.
 - [ ] Plugin is enabled only if agreed.
 - [ ] A real fresh-process `PluginManager`/`PluginContext` probe validates registration contracts.
+- [ ] Every built-in override passes the absent-grant, exact ownership, native-handler preservation, schema/`check_fn`, visibility-matrix, and installed-wheel checks in `references/exact-tool-override-validation.md`.
 - [ ] `hermes -p <profile> tools list` shows each intended plugin toolset in every approved consumer profile.
 - [ ] Active-profile binding and cross-profile rejection were tested.
 - [ ] Model-callable side-effect tools cannot self-confirm; any human token is exact-operation-bound, single-use, and expiry-tested.
