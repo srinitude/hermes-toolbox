@@ -5,7 +5,7 @@ published artifact; this page and the README are tested against it.
 
 Current public manifest:
 
-- Skills: 9
+- Skills: 3
 - Plugin packages: 0
 - Profile packages: 0
 - Personality presets: 1

@@ -16,7 +16,7 @@ Select skills explicitly. `--skill <category/name>` is repeatable;
 `--all-skills` selects every manifest-listed skill.
 
 ```bash
-./scripts/install-toolbox.sh --apply --skill software-development/prompt-enhancer
+./scripts/install-toolbox.sh --apply --skill hermes-agent/hermes-config-audits
 ./scripts/install-toolbox.sh --apply --all-skills --target "${HERMES_HOME:-$HOME/.hermes}"
 ```
 

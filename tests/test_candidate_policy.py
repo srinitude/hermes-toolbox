@@ -1,20 +1,21 @@
 """Fail-closed selection policy contracts for public toolbox candidates."""
 from __future__ import annotations
 
+import json
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
 
 from tests.support import (
-    FIXTURES, add_scripts_path, make_home, make_repo, run_exporter, tree_bytes,
+    FIXTURES, REPO, add_scripts_path, make_home, make_repo, run_exporter, tree_bytes,
 )
 
 add_scripts_path()
 
 from candidate_policy import (  # noqa: E402
-    PolicyConfig, decide_plugin, plugin_candidate, read_allowlist,
-    stale_destinations,
+    DEFAULT_PUBLIC_SKILLS, PolicyConfig, decide_plugin, plugin_candidate,
+    read_allowlist, stale_destinations,
 )
 from export_transaction import plugin_package_manifest  # noqa: E402
 
@@ -102,6 +103,14 @@ class AllowlistInputTests(PolicyCase):
         (self.repo / 'plugins' / 'kept').mkdir()
         (self.repo / 'plugins' / 'stale').mkdir()
         self.assertEqual(stale_destinations(self.repo, 'plugins', ('kept',)), ['stale'])
+
+
+class TrackedDefaultTests(unittest.TestCase):
+    def test_default_skill_fallback_matches_public_manifest(self):
+        manifest_path = REPO / 'inventory' / 'public-manifest.json'
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        listed = ['/'.join(Path(entry['path']).parts[1:3]) for entry in manifest['skills']]
+        self.assertEqual(sorted(DEFAULT_PUBLIC_SKILLS), sorted(listed))
 
 
 class ExporterCase(unittest.TestCase):

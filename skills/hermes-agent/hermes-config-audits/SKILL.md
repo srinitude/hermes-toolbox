@@ -7,7 +7,7 @@ license: Apache-2.0
 metadata:
   hermes:
     tags: [hermes-agent, configuration, profiles, config-yaml, audit, safety]
-    related_skills: [hermes-agent, prompt-enhancer]
+    related_skills: [hermes-agent]
 ---
 
 # Hermes Config Audits
@@ -94,3 +94,5 @@ This is a class-level companion to the protected `hermes-agent` skill. Load `her
 - Session-specific schema-audit method and verified key families: `references/profile-config-schema-audit-2026-07.md`.
 - Exhaustive, source-linked config-reference artifact and adversarial-validation pattern: `references/exhaustive-config-reference-artifacts.md`.
 - Read-only Projects/Kanban/plugin/worker-lane audit procedure and contract checks: `references/kanban-control-plane-read-only-audit.md`.
+- Saved-plan execution drift, rollback, cron/watch/publication, protected-repository, and approval-gate audits: `references/execution-plan-drift-rollback-audit.md`. This reference includes strict no-temp-file discipline, concurrent-state revalidation, evidence plan-hash authority checks, and a JSON reporting contract.
+- Read-only public primitive candidate classification for standalone plugins, native profile distributions, and custom personalities: `references/public-primitive-candidate-classification.md`. It defines accepted/rejected/approval-required precedence, logical exporter staging, report-drift handling, dependency closure, sanitization findings, and real runtime/install gates.

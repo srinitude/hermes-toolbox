@@ -30,6 +30,18 @@ Daytona `v0.190.0` is a concrete example:
 
 Therefore a 1-GiB create uses `--memory 1`, not `--memory 1024`. General rule: trace parser → request assignment → generated API schema → response unit, record the contradiction, choose the wire-contract value, and verify the created object immediately. On any mismatch, teardown before continuing.
 
+## Audit hidden create, MCP, lifecycle, and desktop side effects
+
+A read-only re-audit against installed CLI `v0.190.0`, live API `v0.196.0`, and current first-party docs exposed several reusable gates:
+
+- Preserve the actual root CLI grammar: this release uses `daytona create`, `daytona list`, and `daytona info`, not a speculative `daytona sandbox ...` namespace. Capture live nested help before writing a manifest.
+- Inspect the complete post-create path, not only the create request. Tagged `daytona create` unconditionally requests a standard preview for web-terminal port `22222` and prints its URL after the sandbox is created. A strict no-preview manifest must therefore use a current SDK/API or human Dashboard path that does not call a preview method. Also assume the sandbox may already exist if a later preview lookup makes the CLI return an error.
+- Audit MCP registration and handler logic separately from CLI/API schemas. The tagged `create_sandbox` MCP handler rejects explicit CPU, GPU, memory, or disk whenever `buildInfo` is absent, despite its error text referring to snapshot use; it also retries creation up to three times. Do not use that handler for a strict one-resource run with explicit resource overrides. The same MCP release has no native Computer Use tools.
+- Treat lifecycle intervals according to their triggering state. `auto-stop` is an idle timer, while `auto-delete=N` counts continuous stopped time; neither is a wall-clock deadline from creation. For a bounded ephemeral run, pair an external deadline with `autoDeleteInterval=0` and exact-ID cleanup.
+- Do not infer listener binding from a loopback backend argument. Tagged Computer Use defaults to x11vnc port `5901` and noVNC port `6080`; noVNC proxies to `localhost:5901`, but its `--listen 6080` and the x11vnc command do not explicitly bind listeners to loopback. Require `ss -ltnp` after start. Tailnet policy denial of raw ports is useful defense but is not proof of localhost-only binding.
+- Keep current-contract and release-source axes separate when the hosted API is ahead of the latest public release. Prefer current official SDK calls and feature detection for execution, while labeling source-only findings with the pinned release.
+- API-key authentication can prove sandbox-list access while still withholding organization/tier/wallet commands. A zero sandbox list does not establish VPN eligibility, wallet balance, automatic top-up state, or spend. Require a human Dashboard check without starting a reauthentication flow or exposing a login URL.
+
 ## Minimal bounded create contract
 
 Prefer the default Daytona image when VNC/Computer Use is required; it includes Xvfb, XFCE, x11vnc, noVNC, and supporting libraries. Keep the exact create contract explicit:
@@ -135,6 +147,49 @@ Pre-authorize bounded cleanup with the paid create while still treating destruct
 6. Reconcile dashboard per-sandbox spend after the documented billing delay.
 
 Cleanup must run after partial installation/login failures too. Do not stop at “stop requested”; verify terminal absence in both Daytona and Tailscale control planes.
+
+## Persistent browser context and credential-bearing state
+
+When a Daytona plan needs browser profiles, cookies, or authenticated context to survive, distinguish four storage contracts rather than treating all persistence as interchangeable:
+
+1. **Stopped or archived same sandbox** — smallest blast radius. A graceful browser exit followed by sandbox stop preserves filesystem-backed profile state while clearing container memory. A stopped container retains local disk and historically incurs disk-only cost; archiving moves the whole filesystem to object storage, frees disk quota, and restores more slowly. VM sandboxes do not support archive because stopping already offloads their filesystem state. Prefer one archived container when reuse of the same environment is sufficient.
+2. **Cold snapshot from sandbox** — reusable credential-bearing template. It captures filesystem state from a stopped sandbox, including profile files flushed before stop. Every derived sandbox receives another copy of cookies/tokens, so prohibit automatic fan-out, keep the artifact private, cap concurrency at one unless separately approved, and require an explicit retention/deletion policy.
+3. **Hot VM snapshot** — filesystem plus memory. Treat this as a materially higher secret class because browser processes, unlocked key material, and transient tokens may be copied. Require separate VM and memory-snapshot approval; do not infer Linux support from current prose when the pinned backend release supports memory snapshots only for Windows.
+4. **Daytona Volume** — only the mounted subtree, not the sandbox root. Volumes are FUSE/S3-backed, slower, nontransactional, and documented as unsuitable for applications requiring database-table/block-storage behavior. Because browser profiles contain database-like state, do not recommend a live browser `user-data-dir` on a shared volume without a dedicated runtime test and explicit concurrency controls. A volume is not whole-filesystem capture.
+
+Daytona does not document browser-cookie-specific semantics. Phrase capture as a filesystem consequence: profile/cookie files located on the captured filesystem are included, provided the browser exits cleanly and flushes them. Do not claim that deleting an archive or snapshot revokes server-side sessions; require account-session revocation or reauthentication where needed.
+
+For zero-sandbox prestates, identify the bootstrap cycle explicitly: a custom snapshot containing authenticated browser state cannot exist until one sandbox has been created and used. A policy that every sandbox must originate from that custom snapshot therefore needs either one approved bootstrap exception or a pre-existing approved artifact. Never hide this exception.
+
+### Stability checks for snapshot-from-sandbox
+
+Audit the current hosted docs/OpenAPI and latest immutable release as separate axes:
+
+- SDK methods whose public names contain `_experimental_` remain experimental even when the REST endpoint is documented without that label.
+- Verify whether the installed CLI has a snapshot-from-sandbox verb; image/Dockerfile `snapshot create` is a different operation.
+- Compare `includeMemory` support by sandbox class and required state. A hosted API ahead of the latest public release can document behavior that tagged backend source does not implement.
+- If current OpenAPI exposes only a generic document version rather than the hosted service build version, do not claim release parity.
+- Public pricing may list running CPU/RAM/disk while omitting snapshot/archive object-storage retention. Report omitted retention pricing as unbounded or requiring human confirmation rather than assuming it is free.
+
+The smallest safe default for a one-sandbox browser plan is one non-ephemeral container, no linked children or shared profile volume, graceful browser shutdown, graceful sandbox stop, then archive the exact sandbox. If a literal reusable Daytona Snapshot is mandatory, gate one cold snapshot-from-sandbox as a separate experimental mutation and keep the source sandbox lifecycle explicit.
+
+## Archive, snapshot, ephemeral identity, and HTTPS Serve compatibility
+
+Treat Daytona persistence and Tailscale persistence as independent state machines:
+
+- A Daytona container intended for archive/restore must have `ephemeral=false` and auto-delete disabled. `ephemeral=true` or `autoDeleteInterval=0` deletes it at the stop required for both cold snapshot and archive.
+- The supported ordering is `Started -> graceful Stop -> Stopped -> cold snapshot-from-sandbox -> Stopped -> Archive -> Archived`. A cold snapshot requires `Stopped`; it cannot be taken directly from `Archived`. Starting an archive restores the same sandbox, whereas creating from the resulting Snapshot creates a new sandbox of the inherited class.
+- Archive and cold snapshot preserve filesystem state, not running processes or container memory. Gracefully close browsers and flush database/profile state before stop. On restore, restart Computer Use and all other process services.
+- With `tailscaled --state=mem:`, Daytona archive preserves installed files but not the live node identity. Daemon exit logs out/removes the ephemeral node; restore requires a fresh interactive login and may receive a different node ID, IP, and FQDN. Never promise same-node restore.
+- Tailscale HTTPS certificates require a non-empty daemon var root. Bare `--state=mem:` leaves it empty, so pair ephemeral identity with a separately approved writable `--statedir=<dir>` when HTTPS Serve is required. Serve configuration is stored in the in-memory state store and must be reapplied after daemon restart.
+- A filesystem-backed `--statedir` can place TLS private keys inside Daytona archives and snapshots. Either remove/classify those files before capture or treat every retained artifact as credential-bearing. CT records remain public even after node or artifact deletion.
+- For a pinned explicit exit-node IP, verify the current peer both owns that IP and advertises exit-node capability. A customized tailnet policy must authorize `autogroup:internet`; merely granting connections to the exit-node device does not authorize gateway use. Keep `--exit-node-allow-lan-access=false` and `--accept-routes=false` separate and explicit.
+
+For strict no-preview creation, do not use Daytona CLI `create` at `v0.190.0`: tagged source creates the sandbox and then unconditionally requests the standard web-terminal preview on port `22222`. A later preview failure can leave a successfully created sandbox. The tagged Dashboard create mutation calls the SDK create method without a preview lookup and defaults public preview off, but do not open Dashboard Terminal or VNC afterward. Revalidate the hosted Dashboard build when its API is newer than the latest public release.
+
+The Daytona CLI/API mismatch warning is advisory, asymmetric, once-per-process, and suppressible in structured output. It proves neither schema compatibility nor successful version negotiation. When the hosted API is ahead of the latest public release, use current documented API/Dashboard surfaces, feature-detect experimental calls, and assert every postcondition.
+
+Tagged Daytona Computer Use source should also be checked for listener binding, not just port numbers. At `v0.190.0`, x11vnc defaults to `5901` without an explicit loopback bind/password argument, and noVNC defaults to `6080` with a port-only listen argument while proxying to `localhost:5901`. HTTPS Serve does not close those raw listeners. Require runtime listener inspection plus loopback binding or an independent host/cloud firewall; tailnet grants do not firewall the workload's ordinary cloud interface.
 
 ## Approval gates
 
