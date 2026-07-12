@@ -12,22 +12,16 @@ Compatible Hermes release: `hermes-agent` 0.18.2 (release `v2026.7.7.2`).
 
 ## Current public manifest
 
-- Skills: 9
+- Skills: 3
 - Plugin packages: 0
 - Profile packages: 0
 - Personality presets: 1
 
 Skills under `skills/`:
 
-- `autonomous-ai-agents/openrouter-mcp-server`
 - `hermes-agent/hermes-config-audits`
 - `hermes-agent/honcho-memory-provider`
-- `hermes-agent/profile-builder`
 - `research/first-party-integration-audits`
-- `software-development/goal-prompt`
-- `software-development/plan-update-executor`
-- `software-development/plugin-builder`
-- `software-development/prompt-enhancer`
 
 Personality presets under `primitives/personalities/`:
 
@@ -64,7 +58,7 @@ Install skills explicitly — a repeatable `--skill <category/name>` flag, or
 
 ```bash
 ./scripts/install-toolbox.sh --apply --all-skills --target "${HERMES_HOME:-$HOME/.hermes}"
-./scripts/install-toolbox.sh --apply --skill software-development/prompt-enhancer
+./scripts/install-toolbox.sh --apply --skill hermes-agent/hermes-config-audits
 ```
 
 Install the validator personality preset without activating it, then use it
@@ -119,12 +113,11 @@ databases, pairing state, or runtime files.
 ## Recommended Hermes workflow
 
 1. Start each session with `/personality validator`.
-2. Run user requests through `/prompt-enhancer [prompt]` before execution.
-3. Use `/profile-builder [goal]` for separate role, use-case, category, or
-   responsibility profiles.
-4. Use `/plugin-builder [goal]` when a reusable integration or automation
-   surface needs a plugin.
-5. Validate outputs against explicit source-of-truth checks before handoff.
+2. Use `/hermes-config-audits` for public-safe Hermes configuration audits.
+3. Use `/honcho-memory-provider` for current Honcho memory-provider guidance.
+4. Use `/first-party-integration-audits` when integration claims need
+   first-party verification.
+5. Validate every result against explicit source-of-truth checks before handoff.
 
 ## Publishing model
 

@@ -3,14 +3,9 @@
 This workflow keeps Hermes work explicit, compartmentalized, and verifiable.
 
 1. Install the `validator` personality primitive if needed, then begin each session with `/personality validator`.
-2. Use `/prompt-enhancer [prompt]` before execution so the request names its
-   objective, scope, write boundaries, source-of-truth checks, and validation
-   threshold.
-3. Use `/profile-builder [goal]` for every distinct role, use-case, category,
-   or responsibility that should have isolated config, memory, skills, or
-   automation.
-4. Use `/plugin-builder [goal]` when a reusable tool, integration, command, or
-   automation surface should become a plugin.
+2. Use `/hermes-config-audits` for configuration checks.
+3. Use `/honcho-memory-provider` for memory-provider guidance.
+4. Use `/first-party-integration-audits` for cross-product integration claims.
 5. Validate with live tool output and source-of-truth documentation.
 
 ## Profile layout conventions

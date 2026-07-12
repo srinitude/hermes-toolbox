@@ -9,11 +9,12 @@ repeatable and auditable.
   `./scripts/install-toolbox.sh --apply --personalities` (activation is the
   separate, explicit `--activate-validator` step), then start sessions with
   `/personality validator`.
-- Prompt-enhancement primitive: run `/prompt-enhancer [prompt]` before action.
-- Profile-compartmentalization primitive: use `/profile-builder [goal]` for
-  isolated responsibilities.
-- Plugin-extension primitive: use `/plugin-builder [goal]` for reusable tools
-  and integrations.
+- Configuration-audit primitive: use `/hermes-config-audits` for public-safe
+  Hermes configuration checks.
+- Memory-provider primitive: use `/honcho-memory-provider` for current Honcho
+  integration and isolation guidance.
+- Integration-audit primitive: use `/first-party-integration-audits` to verify
+  cross-product claims against current first-party evidence.
 
 ## Publishing primitives
 

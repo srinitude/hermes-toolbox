@@ -6,9 +6,15 @@ import re
 import unittest
 from pathlib import Path
 
+import yaml
+
 from tests.support import REPO
 
 NAME_RE = re.compile(r'[a-z0-9][a-z0-9/_-]*')
+WITHDRAWN_RELATED_SKILLS = {
+    'openrouter-mcp-server', 'profile-builder', 'plan-update-executor',
+    'plugin-builder', 'prompt-enhancer', 'goal-prompt',
+}
 SELECT_RE = re.compile(r'--(skill|plugin|profile)\s+(\S+)')
 ENABLE_RE = re.compile(r'hermes plugins enable\s+(\S+)')
 PROFILE_INSTALL_RE = re.compile(r'hermes profile install\s+profiles/(\S+)')
@@ -50,6 +56,7 @@ class ManifestNameTests(DocsContractCase):
         for name in sorted(entry_names(self.data, 'skills')):
             self.assertIn(name, readme, f'README.md does not list manifest skill {name}')
 
+
     def test_documented_selections_exist_in_manifest(self):
         listed = {'skill': entry_names(self.data, 'skills'),
                   'plugin': entry_names(self.data, 'plugins'),
@@ -73,6 +80,28 @@ class ManifestNameTests(DocsContractCase):
                 name = concrete_name(token)
                 if name is not None:
                     self.assertIn(name, profiles, f'{rel}: installs unlisted profile {name}')
+
+
+class PublicConfigContractTests(DocsContractCase):
+    def test_public_config_uses_current_skill_disable_schema(self):
+        config_path = REPO / 'examples' / 'config.public.example.yaml'
+        config = yaml.safe_load(config_path.read_text(encoding='utf-8')) or {}
+        skills = config.get('skills') or {}
+        self.assertNotIn('enabled', skills)
+        listed = {Path(entry['path']).parent.name for entry in self.data['skills']}
+        for name in skills.get('disabled') or []:
+            self.assertIn(name, listed, f'public config disables unlisted skill {name}')
+
+
+class RelatedSkillMetadataTests(DocsContractCase):
+    def test_public_skills_do_not_advertise_withdrawn_skills(self):
+        for entry in self.data['skills']:
+            text = (REPO / entry['path']).read_text(encoding='utf-8')
+            frontmatter = yaml.safe_load(text.split('---', 2)[1]) or {}
+            metadata = ((frontmatter.get('metadata') or {}).get('hermes') or {})
+            related = set(metadata.get('related_skills') or [])
+            blocked = sorted(related & WITHDRAWN_RELATED_SKILLS)
+            self.assertFalse(blocked, f"{entry['path']} advertises withdrawn {blocked}")
 
 
 class ManifestCountTests(DocsContractCase):

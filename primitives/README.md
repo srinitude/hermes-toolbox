@@ -1,7 +1,7 @@
 # Primitives Quick Start
 
 ```text
-start session -> /personality validator -> /prompt-enhancer [prompt] -> decide whether to use /profile-builder [goal] or /plugin-builder [goal] -> execute with validation
+start session -> /personality validator -> choose a manifest-listed skill -> execute with validation
 
 discover source -> classify candidate -> export sanitized copy -> validate public safety -> validate identity neutrality -> fingerprint -> publish or silent no-op
 ```

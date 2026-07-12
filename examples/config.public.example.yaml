@@ -3,5 +3,4 @@
 terminal:
   cwd: "$HOME/projects/example"
 skills:
-  enabled:
-    - prompt-enhancer
+  disabled: []
