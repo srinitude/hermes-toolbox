@@ -71,11 +71,54 @@ def run_probe(home: Path, spec: dict) -> dict:
     return json.loads(result.stdout)
 
 
-def probe_plugin_package(pkg_dir: Path, payload: dict | None = None) -> dict:
+def _unique_names(values, label: str) -> list[str]:
+    names = list(values or [])
+    duplicates = sorted({name for name in names if names.count(name) > 1})
+    if duplicates:
+        raise SystemExit(f"duplicate {label} selection: {', '.join(duplicates)}")
+    return names
+
+
+def _validate_declarations(declared: dict) -> None:
+    fields = (
+        ('provides_tools', 'tool'), ('provides_commands', 'command'),
+        ('provides_hooks', 'hook'), ('provides_cli_commands', 'CLI command'),
+        ('provides_skills', 'skill'),
+    )
+    for field, label in fields:
+        _unique_names(declared.get(field), f'declared {label}')
+
+
+def _selected_calls(
+    declared: dict,
+    normal_tools: list[str] | None,
+    malformed_tools: list[str] | None,
+    call_commands: list[str] | None,
+) -> tuple[list[str], list[str], list[str]]:
+    legacy = normal_tools is None and malformed_tools is None and call_commands is None
+    tools = _unique_names(declared.get('provides_tools'), 'declared tool')
+    commands = _unique_names(declared.get('provides_commands'), 'declared command')
+    normal = tools if legacy else _unique_names(normal_tools, 'normal tool')
+    malformed = tools if legacy else _unique_names(malformed_tools, 'malformed tool')
+    selected_commands = commands if legacy else _unique_names(call_commands, 'command')
+    return normal, malformed, selected_commands
+
+
+def probe_plugin_package(
+    pkg_dir: Path,
+    payload: dict | None = None,
+    *,
+    normal_tools: list[str] | None = None,
+    malformed_tools: list[str] | None = None,
+    call_commands: list[str] | None = None,
+) -> dict:
     """Probe one package twice with real discovery: disabled, then enabled."""
     pkg_dir = Path(pkg_dir)
     declared = yaml.safe_load((pkg_dir / 'plugin.yaml').read_text(encoding='utf-8'))
+    _validate_declarations(declared)
     name = str(declared['name'])
+    normal, malformed, command_calls = _selected_calls(
+        declared, normal_tools, malformed_tools, call_commands)
     with tempfile.TemporaryDirectory(prefix='hermes-probe-') as tmp:
         home = Path(tmp) / 'home'
         (home / 'plugins').mkdir(parents=True)
@@ -84,8 +127,9 @@ def probe_plugin_package(pkg_dir: Path, payload: dict | None = None) -> dict:
         baseline = run_probe(home, {})
         write_enabled_config(home, [name])
         enabled = run_probe(home, {
-            'call_tools': declared.get('provides_tools') or [],
-            'call_commands': declared.get('provides_commands') or [],
+            'normal_tools': normal,
+            'malformed_tools': malformed,
+            'call_commands': command_calls,
             'payload': payload or DEFAULT_PAYLOAD,
         })
     return _probe_report(name, baseline, enabled)
@@ -99,6 +143,11 @@ def _probe_report(name: str, baseline: dict, enabled: dict) -> dict:
         'baseline': baseline,
         'new_tools': sorted(set(enabled['tools']) - set(baseline['tools'])),
         'new_commands': sorted(set(enabled['commands']) - set(baseline['commands'])),
+        'new_hooks': sorted(set(enabled['hooks']) - set(baseline['hooks'])),
+        'new_cli_commands': sorted(
+            command for command, owner in enabled['cli_commands'].items()
+            if owner.get('key') == name
+            and baseline['cli_commands'].get(command) != owner),
         'skills': {qualified: entry for qualified, entry in enabled['skills'].items()
                    if entry.get('plugin') == name},
         'tool_calls': enabled['tool_calls'],

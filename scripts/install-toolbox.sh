@@ -58,7 +58,9 @@ PY
 }
 
 require_listed() {
-  if ! manifest_names "$1" | grep -Fxq -- "$2"; then
+  local listed
+  listed="$(manifest_names "$1")"
+  if ! grep -Fxq -- "$2" <<<"$listed"; then
     echo "unknown $1 selection (not in inventory/public-manifest.json): $2" >&2
     exit 1
   fi

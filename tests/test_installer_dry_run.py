@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -77,6 +78,28 @@ class SkillSelectionTests(InstallerCase):
         result = self.run_installer('--apply', '--skill', 'no-category/no-skill')
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.target_tree(), [])
+
+
+class ManifestReaderTests(InstallerCase):
+    def test_early_match_does_not_break_manifest_reader(self):
+        fixture_repo = Path(tempfile.mkdtemp(prefix='manifest-reader-repo-'))
+        self.addCleanup(shutil.rmtree, fixture_repo, True)
+        (fixture_repo / 'scripts').mkdir()
+        (fixture_repo / 'inventory').mkdir()
+        shutil.copy2(INSTALLER, fixture_repo / 'scripts/install-toolbox.sh')
+        skills = [
+            {'path': f'skills/category/skill-{index}/SKILL.md'}
+            for index in range(10_000)
+        ]
+        manifest = {'skills': skills, 'plugins': [], 'profiles': []}
+        (fixture_repo / 'inventory/public-manifest.json').write_text(
+            json.dumps(manifest), encoding='utf-8')
+        env = dict(os.environ, PYTHONUNBUFFERED='1')
+        result = subprocess.run(
+            ['bash', str(fixture_repo / 'scripts/install-toolbox.sh'),
+             '--target', str(self.target), '--skill', 'category/skill-0'],
+            capture_output=True, text=True, env=env)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class PackageInstallerCase(InstallerCase):

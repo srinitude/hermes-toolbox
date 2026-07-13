@@ -157,8 +157,7 @@ def check_profile_hygiene(profile_dir: Path, rel: str) -> list[str]:
         return [f'{rel}/distribution.yaml: invalid YAML: {exc}']
     if not isinstance(data, dict):
         return [f'{rel}/distribution.yaml: manifest must be a mapping']
-    errors = [f'{rel}/distribution.yaml: forbidden runtime field {key!r}'
-              for key in FORBIDDEN_PROFILE_KEYS if key in data]
+    errors = [f'{rel}/distribution.yaml: forbidden runtime field {key!r}' for key in FORBIDDEN_PROFILE_KEYS if key in data]
     for path in sorted(p for p in profile_dir.rglob('*') if p.is_file()):
         text = read_text_or_skip(path)
         pkg_rel = path.relative_to(profile_dir).as_posix()
@@ -169,7 +168,7 @@ def check_profile_hygiene(profile_dir: Path, rel: str) -> list[str]:
 
 
 def _diff_errors(rel: str, label: str, declared, actual) -> list[str]:
-    errors = []
+    errors = [f'{rel}: duplicate declared {label} {name!r}' for name in sorted(set(declared)) if list(declared).count(name) > 1]
     for name in sorted(set(declared) - set(actual)):
         errors.append(f'{rel}: declared {label} {name!r} was not registered by the real manager')
     for name in sorted(set(actual) - set(declared)):
@@ -183,8 +182,13 @@ def check_registration_parity(declared: dict, probe: dict, rel: str) -> list[str
                           probe['new_tools'])
     errors += _diff_errors(rel, 'command', declared.get('provides_commands') or [],
                            probe['new_commands'])
+    errors += _diff_errors(rel, 'hook', declared.get('provides_hooks') or [],
+                           probe.get('new_hooks') or [])
+    errors += _diff_errors(rel, 'CLI command', declared.get('provides_cli_commands') or [],
+                           probe.get('new_cli_commands') or [])
     name = str(declared.get('name') or '')
     declared_skills = declared.get('provides_skills') or []
+    errors += _diff_errors(rel, 'skill', declared_skills, declared_skills)
     skills = probe.get('skills') or {}
     for skill in sorted(declared_skills):
         entry = skills.get(f'{name}:{skill}')
