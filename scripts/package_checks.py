@@ -35,6 +35,7 @@ def check_package_manifest(pkg_dir: Path, rel: str, kind: str) -> list[str]:
     data, error = load_json(manifest)
     if error:
         return [f'{rel}/manifest.json: {error}']
+    assert data is not None
     errors: list[str] = []
     if data.get('sanitized') is not True:
         errors.append(f'{rel}/manifest.json: sanitized must be true')
@@ -42,6 +43,12 @@ def check_package_manifest(pkg_dir: Path, rel: str, kind: str) -> list[str]:
         errors.append(f'{rel}/manifest.json: missing required excluded categories')
     if kind == 'plugin' and not data.get('source_gate'):
         errors.append(f'{rel}/manifest.json: missing source gate')
+    if kind in {'plugin', 'profile'}:
+        actual = sorted(path.relative_to(pkg_dir).as_posix()
+                        for path in pkg_dir.rglob('*')
+                        if path.is_file() and path != manifest)
+        if data.get('included_files') != actual:
+            errors.append(f'{rel}/manifest.json: included files do not match package')
     return errors
 
 

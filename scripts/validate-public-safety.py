@@ -11,6 +11,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from package_checks import check_repo_package_manifests, check_repo_personalities
+from public_manifest import fingerprint_errors
 from safety_checks import validate_text_safety
 
 
@@ -18,6 +19,7 @@ def validate(repo: Path = REPO) -> list[str]:
     errors = validate_text_safety(repo)
     errors.extend(check_repo_package_manifests(repo))
     errors.extend(check_repo_personalities(repo))
+    errors.extend(fingerprint_errors(repo))
     return errors
 
 

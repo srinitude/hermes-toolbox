@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from credential_policy import credential_key
 from package_checks import check_package_manifest, check_profile_hygiene, find_placeholders
 
 REQUIRED_PROFILE_FILES = ('distribution.yaml', 'SOUL.md', 'config.yaml',
@@ -17,7 +18,6 @@ RUNTIME_NAME_RE = re.compile(
     r'(?i)^(\.env(\..+)?|auth\.(json|lock)|mcp-tokens|memories|sessions|logs|cache|'
     r'(audio|image|document)_cache|pairing|cron|runtime|backups?|checkpoints|'
     r'workspace|home|plans|private|hooks|\.hermes_history|.+\.db(-shm|-wal)?)$')
-SECRET_KEY_RE = re.compile(r'(?i)(api[_-]?key|apikey|token|secret|password|credential|cookie)')
 
 
 def load_profile_manifest(pkg: Path) -> tuple[dict | None, str | None]:
@@ -77,7 +77,7 @@ def _secret_key_paths(node, prefix: str = ''):
     if isinstance(node, dict):
         for key, value in node.items():
             path = f'{prefix}.{key}' if prefix else str(key)
-            if SECRET_KEY_RE.search(str(key)):
+            if credential_key(str(key)):
                 yield path
             yield from _secret_key_paths(value, path)
     elif isinstance(node, list):

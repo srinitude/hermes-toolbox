@@ -125,7 +125,7 @@ def export_one_profile(hermes_home: Path, repo: Path, name: str, cfg: PolicyConf
             return errors
         write(staging / 'manifest.json', profile_package_manifest(staging, name))
         return (profile_package_errors(staging, f'profiles/{name}')
-                + staged_text_errors(staging) + _install_check(staging, name))
+                + staged_text_errors(staging, repo) + _install_check(staging, name))
 
     return run_transaction(candidate.destination, build, f'public profile candidate {name!r}')
 

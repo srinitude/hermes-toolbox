@@ -26,12 +26,14 @@ def export(repo: Path, home: Path, *extra: str):
 
 class ExportedPackageCase(unittest.TestCase):
     dest: Path
+    source: Path
 
     @classmethod
     def setUpClass(cls):
         base = Path(tempfile.mkdtemp(prefix='profile-export-'))
         cls.addClassCleanup(shutil.rmtree, base, True)
         repo, home = profile_export_sources(base)
+        cls.source = home / 'profiles' / PROFILE
         result = export(repo, home, '--public-profile', PROFILE)
         if result.returncode != 0:
             raise AssertionError(result.stdout + result.stderr)
@@ -43,6 +45,10 @@ class NativePackageTests(ExportedPackageCase):
         for name in NATIVE_FILES:
             self.assertTrue((self.dest / name).is_file(), name)
         self.assertTrue((self.dest / 'skills' / 'demo-guide' / 'SKILL.md').is_file())
+
+    def test_distribution_owned_safe_overlay_bytes_survive_exactly(self):
+        rel = Path('skills/demo-guide/SKILL.md')
+        self.assertEqual((self.dest / rel).read_bytes(), (self.source / rel).read_bytes())
 
     def test_provenance_fields_are_stripped(self):
         data = yaml.safe_load((self.dest / 'distribution.yaml').read_text(encoding='utf-8'))
@@ -135,6 +141,30 @@ class TransactionFailureTests(ProfileTransactionCase):
         with (self.source / 'config.yaml').open('a', encoding='utf-8') as fh:
             fh.write('display:\n  access_token: ' + 'a1b2c3d4e5f6a7b8c9d0\n')
         self.assert_preserved(self.export_profile())
+
+
+class ProfileAuthorIdentityTests(ProfileTransactionCase):
+    def test_profile_author_prose_is_case_insensitively_protected(self):
+        manifest = self.source / 'distribution.yaml'
+        data = yaml.safe_load(manifest.read_text(encoding='utf-8'))
+        data['author'] = 'Jane Team'
+        manifest.write_text(yaml.safe_dump(data, sort_keys=False), encoding='utf-8')
+        with (self.source / 'README.md').open('a', encoding='utf-8') as handle:
+            handle.write('\nRun jane team.\n')
+        result = self.export_profile()
+        self.assert_preserved(result)
+        self.assertIn('approved author identity', result.stderr)
+
+
+class SemanticProfileFailureTests(ProfileTransactionCase):
+    def test_private_interpreter_path_preserves_last_known_good(self):
+        executable = (Path('/') / 'home' / 'example-user' / '.hermes' /
+                      'hermes-agent' / 'venv' / 'bin' / 'python')
+        with (self.source / 'README.md').open('a', encoding='utf-8') as handle:
+            handle.write(f'\nRun {executable} task.py.\n')
+        result = self.export_profile()
+        self.assert_preserved(result)
+        self.assertIn('placeholder-bearing executable path', result.stderr)
 
 
 class TransactionStabilityTests(ProfileTransactionCase):

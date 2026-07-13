@@ -7,6 +7,8 @@ import re
 import subprocess
 from pathlib import Path
 
+import yaml
+
 EXCLUDED_CATEGORIES = [
     'env', 'auth', 'tokens', 'memories', 'sessions', 'logs', 'cache',
     'state', 'pairing', 'runtime'
@@ -14,7 +16,7 @@ EXCLUDED_CATEGORIES = [
 REQUIRED_EXCLUDED = set(EXCLUDED_CATEGORIES)
 RUNTIME_PARTS = {
     '.env', 'auth.json', 'mcp-tokens', 'memories', 'sessions', 'logs',
-    'cache', 'pairing',
+    'cache', '.pytest_cache', '.mypy_cache', '.ruff_cache', '__pycache__', 'pairing',
 }
 FORBIDDEN_PARTS = RUNTIME_PARTS | {
     'state.db', 'checkpoints', 'backups', 'state-snapshots',
@@ -24,7 +26,6 @@ EMAIL_RE = re.compile(r'\b[A-Za-z0-9._%+-]+@(?!(?:example\.com)\b)[A-Za-z0-9.-]+
 HERMES_HOME_RE = re.compile(r'(?<![A-Za-z0-9_<])/(home|Users)/([A-Za-z0-9._-]+)/\.hermes(?=/|\b)')
 USER_HOME_RE = re.compile(r'(?<![A-Za-z0-9_<])/(home|Users)/([A-Za-z0-9._-]+)(?=/|\b)')
 API_KEY_CONFIG_RE = re.compile(r'hermes config set ([A-Z][A-Z0-9_]*_API_KEY)\s+<[^\n>]+>')
-SECRET_RE = re.compile(r'(?i)(api[_-]?key|access[_-]?token|refresh[_-]?token|password|secret)\s*[:=]\s*[A-Za-z0-9_./+=-]{16,}')
 TRAILER_RE = re.compile(r'(?im)^(co-authored-by|generated-by|ai-authored-by|ai-co-authored-by):')
 FRONTMATTER_RE = re.compile(r'^---\s*\n(.*?)\n---\s*\n', re.S)
 
@@ -92,7 +93,7 @@ def git_files(repo: Path) -> list[Path]:
     try:
         out = subprocess.check_output(
             ['git', 'ls-files', '--cached', '--others', '--exclude-standard'],
-            cwd=repo, text=True,
+            cwd=repo, text=True, stderr=subprocess.DEVNULL,
         )
         files = [repo / line for line in out.splitlines() if line]
         if files:
@@ -113,24 +114,23 @@ def _walk_files(repo: Path) -> list[Path]:
     return files
 
 
-def parse_frontmatter(text: str) -> tuple[dict[str, str] | None, str | None]:
+def parse_frontmatter(text: str) -> tuple[dict | None, str | None]:
     match = FRONTMATTER_RE.search(text)
     if not match:
         return None, None
-    data: dict[str, str] = {}
-    for line in match.group(1).splitlines():
-        if not line or line.startswith(' ') or ':' not in line:
-            continue
-        key, value = line.split(':', 1)
-        data[key.strip()] = value.strip().strip('"\'')
-    return data, text[match.end():]
+    try:
+        data = yaml.safe_load(match.group(1))
+    except (yaml.YAMLError, TypeError, ValueError, OverflowError):
+        return None, None
+    return (data, text[match.end():]) if isinstance(data, dict) else (None, None)
 
 
 def frontmatter_author(skill_text: str) -> str | None:
     data, _ = parse_frontmatter(skill_text)
     if data is None:
         return None
-    return data.get('author') or None
+    value = data.get('author')
+    return value if isinstance(value, str) and value else None
 
 
 def check_child_file(root: Path, rel: object, label: str) -> tuple[Path | None, str | None]:

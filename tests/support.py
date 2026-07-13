@@ -39,15 +39,19 @@ def make_home(base: Path, profile: str = 'pub-src',
     plugin_root.mkdir(parents=True)
     for name, source in (plugins or {}).items():
         shutil.copytree(source, plugin_root / name)
-        _rename_plugin(plugin_root / name, name)
+        rename_plugin(plugin_root / name, name)
     return home
 
 
-def _rename_plugin(plugin_dir: Path, name: str) -> None:
+def rename_plugin(plugin_dir: Path, name: str) -> None:
     manifest = plugin_dir / 'plugin.yaml'
     text = manifest.read_text(encoding='utf-8')
     manifest.write_text(text.replace('name: complete-plugin', f'name: {name}', 1),
                         encoding='utf-8')
+    plugin = plugin_dir / '__init__.py'
+    source = plugin.read_text(encoding='utf-8')
+    plugin.write_text(source.replace("PLUGIN_NAME = 'complete-plugin'",
+                                     f"PLUGIN_NAME = '{name}'"), encoding='utf-8')
 
 
 PROVENANCE = ("source: /tmp/hermes-dist-stage/extracted/demo\n"

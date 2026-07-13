@@ -8,7 +8,8 @@ import unittest
 from pathlib import Path
 
 from tests.support import (
-    FIXTURES, REPO, add_scripts_path, make_home, make_repo, run_exporter, tree_bytes,
+    FIXTURES, REPO, add_scripts_path, make_home, make_repo, rename_plugin,
+    run_exporter, tree_bytes,
 )
 
 add_scripts_path()
@@ -138,10 +139,7 @@ class ExporterSweepTests(ExporterCase):
     def test_unallowlisted_destination_is_retained_unchanged(self):
         retained = self.repo / 'plugins' / 'retained-plugin'
         shutil.copytree(FIXTURES / 'complete-plugin', retained)
-        declared = (retained / 'plugin.yaml').read_text(encoding='utf-8')
-        (retained / 'plugin.yaml').write_text(
-            declared.replace('name: complete-plugin', 'name: retained-plugin', 1),
-            encoding='utf-8')
+        rename_plugin(retained, 'retained-plugin')
         (retained / 'manifest.json').write_text(
             plugin_package_manifest(retained, 'retained-plugin'), encoding='utf-8')
         before = tree_bytes(retained)

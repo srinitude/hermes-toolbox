@@ -75,10 +75,23 @@ def run_exports(repo: Path, hermes_home: Path, skill_rels: list[Path],
     return accepted
 
 
-def planned_destinations(repo: Path, skill_rels: list[Path], cfg: PolicyConfig) -> list[Path]:
+def planned_destinations(repo: Path, skill_rels: list[Path],
+                         cfg: PolicyConfig) -> list[Path]:
     return ([repo / 'skills' / rel for rel in skill_rels]
             + [repo / 'plugins' / name for name in cfg.public_plugins]
             + [repo / 'profiles' / name for name in cfg.public_profiles])
+
+
+def checked_change_list(repo: Path, hermes_home: Path, value: str) -> Path | None:
+    if not value:
+        return None
+    candidate = Path(value).resolve()
+    protected_roots = (repo.resolve(), hermes_home.resolve())
+    if any(candidate == root or root in candidate.parents for root in protected_roots):
+        raise SystemExit('--change-list must be outside repository and source roots')
+    if candidate.exists() and candidate.stat().st_nlink > 1:
+        raise SystemExit('--change-list must not be a hardlink')
+    return candidate
 
 
 def run_validators(repo: Path) -> None:
@@ -99,15 +112,19 @@ def main() -> int:
         public_profiles=merged_allowlist(repo, args.public_profile,
                                          'public-profile-allowlist.txt', 'public profile'))
     skill_rels = public_skill_rels(repo, args.public_skill)
+    targets = planned_destinations(repo, skill_rels, cfg)
+    change_list = checked_change_list(repo, hermes_home, args.change_list)
     ensure_local_info(repo, args.private_profile_prefix, args.public_plugin_profile,
                       args.approved_author_line)
-    with BatchTransaction(repo, planned_destinations(repo, skill_rels, cfg)):
+    if change_list:
+        targets.append(change_list)
+    with BatchTransaction(repo, targets):
         accepted = run_exports(repo, hermes_home, skill_rels, args, cfg)
         write_inventory(repo)
         run_validators(repo)
+        if change_list:
+            write_change_list(change_list, repo, accepted)
     report_retained(repo, cfg)
-    if args.change_list:
-        write_change_list(Path(args.change_list), repo, accepted)
     return 0
 
 

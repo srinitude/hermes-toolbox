@@ -121,12 +121,34 @@ def fingerprint_files(repo: Path, manifest: dict) -> list[Path]:
     return sorted(set(files))
 
 
+def build_fingerprints(repo: Path, manifest: dict | None = None) -> dict[str, str]:
+    manifest = manifest or build_public_manifest(repo)
+    return {
+        path.relative_to(repo).as_posix(): sha(path)
+        for path in fingerprint_files(repo, manifest)
+        if not skip_inventory_file(repo, path)
+    }
+
+
+def fingerprint_errors(repo: Path) -> list[str]:
+    path = repo / 'inventory' / 'source-fingerprints.json'
+    try:
+        actual = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError) as exc:
+        return [f'inventory/source-fingerprints.json: {exc}']
+    expected = build_fingerprints(repo)
+    if actual == expected:
+        return []
+    missing = len(set(expected) - set(actual))
+    extra = len(set(actual) - set(expected))
+    mismatched = sum(actual.get(name) != digest for name, digest in expected.items()
+                     if name in actual)
+    return [f'inventory/source-fingerprints.json: stale ({missing} missing, '
+            f'{extra} extra, {mismatched} mismatched)']
+
+
 def write_inventory(repo: Path) -> None:
     manifest = build_public_manifest(repo)
     write(repo / 'inventory' / 'public-manifest.json', json.dumps(manifest, indent=2, sort_keys=True) + '\n')
-    fingerprints = {}
-    for path in fingerprint_files(repo, manifest):
-        if skip_inventory_file(repo, path):
-            continue
-        fingerprints[path.relative_to(repo).as_posix()] = sha(path)
+    fingerprints = build_fingerprints(repo, manifest)
     write(repo / 'inventory' / 'source-fingerprints.json', json.dumps(fingerprints, indent=2, sort_keys=True) + '\n')

@@ -2,25 +2,30 @@
 """Text-level public-safety and identity-neutrality checks."""
 from __future__ import annotations
 
+import json
 import os
 import re
 from pathlib import Path
 
-from toolbox_common import (
-    EMAIL_RE, FORBIDDEN_PARTS, SECRET_RE, TRAILER_RE, USER_HOME_RE,
-    git_files, git_info_dir, parse_frontmatter, read_terms, text_file,
+from author_path_policy import approved_author_metadata_path
+from author_policy import (
+    author_identity_terms, identity_view, metadata_author_context, unsafe_author_field,
 )
+from credential_policy import (
+    credential_assignment, private_key_block, python_credential_assignment,
+    sensitive_credential,
+)
+from line_safety_policy import line_violation
+from sanitize_rules import semantic_text_errors
+from structured_text_policy import structured_payloads
+from toolbox_common import (
+    FORBIDDEN_PARTS, TRAILER_RE, git_files, git_info_dir, parse_frontmatter,
+    read_terms, text_file,
+)
+from yaml_identity_policy import decoded_yaml_scalars
 
 MIN_PUBLIC_SKILL_LINES = 40
 SUPPORT_REF_RE = re.compile(r'\b(?:references|templates|scripts|assets)/[A-Za-z0-9][A-Za-z0-9._/-]*')
-
-
-def approved_lines(repo: Path) -> set[str]:
-    lines = set(read_terms(git_info_dir(repo) / 'approved-authorship.txt'))
-    env = os.environ.get('HERMES_TOOLBOX_APPROVED_AUTHOR_LINE')
-    if env:
-        lines.add(env.strip())
-    return lines
 
 
 def deny_terms(repo: Path) -> list[str]:
@@ -31,39 +36,11 @@ def deny_terms(repo: Path) -> list[str]:
     env = os.environ.get('HERMES_TOOLBOX_DENY_TERMS')
     if env:
         terms.extend(x.strip() for x in env.split(',') if x.strip())
-    # Sort longest first for clearer diagnostics.
     return sorted(set(terms), key=len, reverse=True)
 
 
-def skill_author_names(files: list[Path]) -> set[str]:
-    names: set[str] = set()
-    for path in files:
-        if path.name == 'SKILL.md' and path.exists() and text_file(path):
-            fm, _ = parse_frontmatter(path.read_text(encoding='utf-8', errors='ignore'))
-            if fm and fm.get('author'):
-                names.add(fm['author'])
-    return names
-
-
-def author_identity_terms(author_names: set[str]) -> list[str]:
-    terms: set[str] = set()
-    for name in author_names:
-        parts = [p for p in re.split(r'\s+', name.strip()) if p]
-        if len(parts) >= 2:
-            terms.add(name)
-            if len(parts[0]) > 2:
-                terms.add(parts[0])
-    return sorted(terms, key=len, reverse=True)
-
-
-def line_allowed(rel: str, line: str, approvals: set[str], author_names: set[str]) -> bool:
-    stripped = line.strip()
-    if rel.endswith('SKILL.md') and stripped in approvals:
-        return True
-    if rel.endswith('SKILL.md') and stripped.startswith('author:'):
-        value = stripped.split(':', 1)[1].strip().strip('"\'')
-        return value in author_names
-    return False
+def line_allowed(rel: str, index: int, locations: set[tuple[str, int]]) -> bool:
+    return (rel, index) in locations
 
 
 def path_is_forbidden(rel: str) -> str | None:
@@ -86,9 +63,13 @@ def validate_public_skill(rel: str, text: str) -> list[str]:
     if fm is None or body is None:
         return [f'{rel}: missing valid YAML-style frontmatter block']
     for key in ['name', 'description', 'version', 'author', 'license']:
-        if not fm.get(key):
+        value = fm.get(key)
+        if not value:
             errors.append(f'{rel}: missing frontmatter key {key}')
-    if fm.get('description') and len(fm['description']) > 1024:
+        elif not isinstance(value, str):
+            errors.append(f'{rel}: frontmatter key {key} must be a scalar string')
+    description = fm.get('description')
+    if isinstance(description, str) and len(description) > 1024:
         errors.append(f'{rel}: description exceeds 1024 characters')
     if len(text.splitlines()) < MIN_PUBLIC_SKILL_LINES:
         errors.append(f'{rel}: public skill is too short to be a usable exported skill package ({len(text.splitlines())} lines < {MIN_PUBLIC_SKILL_LINES})')
@@ -113,46 +94,90 @@ def skill_reference_errors(rel: str, pkg_dir: Path) -> list[str]:
     return errors
 
 
-def _line_violation(line: str, terms: list[str], author_terms: list[str]) -> str | None:
-    if EMAIL_RE.search(line):
-        return 'non-example email address detected'
-    if USER_HOME_RE.search(line):
-        return 'user-specific absolute home path detected; use $HOME, $HERMES_HOME, or placeholders'
-    for term in terms:
-        if term and term in line:
-            return 'denied private/identity term detected'
-    for term in author_terms:
-        if term and term in line:
-            return 'approved author identity appears outside allowed frontmatter'
+def _structured_scalar_error(rel: str, scalar: tuple, ctx: dict,
+                             role: str) -> tuple[int, str] | None:
+    value, line, author, credential = scalar
+    if credential and sensitive_credential(value):
+        return line, 'credential-like assignment detected'
+    if author and role != 'fence' and approved_author_metadata_path(rel):
+        return None
+    if author:
+        return line, 'author field outside approved metadata'
+    result = line_violation(value, ctx['terms'], ctx['author_terms'])
+    return (line, result) if result else None
+
+
+def _decoded_yaml_error(rel: str, text: str, ctx: dict) -> tuple[int, str] | None:
+    for payload, offset, kind, role in structured_payloads(rel, text):
+        if kind == 'json':
+            try:
+                json.loads(payload)
+            except json.JSONDecodeError:
+                return offset + 1, 'invalid JSON cannot be published'
+        scalars = decoded_yaml_scalars(payload)
+        if scalars is None:
+            return offset + 1, 'invalid YAML cannot be published'
+        for scalar in scalars:
+            error = _structured_scalar_error(rel, scalar, ctx, role)
+            if error:
+                return offset + error[0], error[1]
     return None
 
 
+def _credential_errors(rel: str, text: str, decoded) -> list[str]:
+    is_python = rel.endswith('.py')
+    raw = (decoded is None
+           and (private_key_block(text)
+                or not is_python and credential_assignment(text)))
+    python_credential = is_python and not raw and python_credential_assignment(text)
+    return ([f'{rel}: credential-like assignment detected']
+            if raw or python_credential else [])
+
+
 def _scan_text(rel: str, text: str, ctx: dict) -> list[str]:
-    errors: list[str] = []
+    errors = ([f'{rel}: {error}' for error in semantic_text_errors(text)]
+              if ctx.get('semantic') else [])
+    decoded = _decoded_yaml_error(rel, text, ctx)
+    if decoded:
+        errors.append(f'{rel}:{decoded[0]}: {decoded[1]}')
     if rel.endswith('SKILL.md'):
         errors.extend(validate_public_skill(rel, text))
-    if SECRET_RE.search(text):
-        errors.append(f'{rel}: credential-like assignment detected')
+    errors.extend(_credential_errors(rel, text, decoded))
     if TRAILER_RE.search(text):
         errors.append(f'{rel}: generated/co-author trailer detected')
     for idx, line in enumerate(text.splitlines(), 1):
-        if line_allowed(rel, line, ctx['approvals'], ctx['authors']):
-            continue
-        why = _line_violation(line, ctx['terms'], ctx['author_terms'])
+        allowed = line_allowed(rel, idx, ctx['author_locations'])
+        if (rel, idx) in ctx['invalid_author_locations']:
+            errors.append(f'{rel}:{idx}: complex author metadata is not allowed')
+            break
+        if not allowed and unsafe_author_field(line):
+            errors.append(f'{rel}:{idx}: author field outside metadata')
+            break
+        spans = ctx['author_spans'].get((rel, idx), [])
+        identity_line = identity_view(line, spans)
+        why = line_violation(line, ctx['terms'], ctx['author_terms'], identity_line)
         if why:
             errors.append(f'{rel}:{idx}: {why}')
             break
     return errors
 
 
+def _file_context(ctx: dict, rel: str) -> dict:
+    semantic = not rel.startswith(('.github/', 'scripts/', 'tests/'))
+    return {**ctx, 'semantic': semantic}
+
+
 def validate_text_safety(repo: Path) -> list[str]:
     errors: list[str] = []
     files = git_files(repo)
-    authors = skill_author_names(files)
+    authors, author_locations, invalid_locations, author_spans = metadata_author_context(
+        repo, files,
+    )
     ctx = {
-        'approvals': approved_lines(repo),
         'terms': deny_terms(repo),
-        'authors': authors,
+        'author_locations': author_locations,
+        'invalid_author_locations': invalid_locations,
+        'author_spans': author_spans,
         'author_terms': author_identity_terms(authors),
     }
     for path in files:
@@ -167,5 +192,6 @@ def validate_text_safety(repo: Path) -> list[str]:
             # Only the license-free text repo is expected; binary files are not useful here.
             errors.append(f'{rel}: binary or non-UTF-8 file not allowed in public toolbox')
             continue
-        errors.extend(_scan_text(rel, path.read_text(encoding='utf-8', errors='ignore'), ctx))
+        text = path.read_text(encoding='utf-8', errors='ignore')
+        errors.extend(_scan_text(rel, text, _file_context(ctx, rel)))
     return errors

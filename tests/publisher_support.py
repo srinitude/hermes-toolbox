@@ -11,6 +11,7 @@ from tests.support import FIXTURES, clean_env, make_home, make_repo, run_exporte
 SKILL_REL = 'fixtures/complete-skill'
 PROFILE_ARGS = ('--public-plugin-profile', 'pub-src')
 TEST_IDENTITY = ('Toolbox Publisher', 'publisher@example.com')
+RUNTIME_SRC = Path.home() / '.hermes' / 'hermes-agent'
 
 
 def git_in(repo: Path, *args: str) -> subprocess.CompletedProcess:
@@ -37,6 +38,7 @@ def publisher_env(base: Path) -> dict[str, str]:
         env.pop(key, None)
     env.update({'HOME': str(base), 'GIT_CONFIG_GLOBAL': '/dev/null',
                 'GIT_CONFIG_SYSTEM': '/dev/null', 'GIT_TERMINAL_PROMPT': '0',
+                'HERMES_RUNTIME_SRC': str(RUNTIME_SRC),
                 'HERMES_TOOLBOX_LOCK': str(base / 'publisher.lock')})
     return env
 

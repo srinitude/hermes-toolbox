@@ -12,7 +12,7 @@ from pathlib import Path
 from tests.support import FIXTURES, add_scripts_path
 
 add_scripts_path()
-from public_manifest import write_inventory  # noqa: E402
+from public_manifest import fingerprint_errors, write_inventory  # noqa: E402
 
 SKILL_DEST = 'skills/fixtures/complete-skill'
 
@@ -74,6 +74,15 @@ class InclusionTests(FingerprintCase):
     def test_hashes_are_exact_sha256_of_file_bytes(self):
         digest = hashlib.sha256((self.repo / SKILL_DEST / 'SKILL.md').read_bytes()).hexdigest()
         self.assertEqual(self.prints[f'{SKILL_DEST}/SKILL.md'], digest)
+
+
+class ValidationTests(FingerprintCase):
+    def test_current_fingerprints_pass(self):
+        self.assertEqual(fingerprint_errors(self.repo), [])
+
+    def test_stale_fingerprint_fails(self):
+        (self.repo / 'README.md').write_text('changed\n')
+        self.assertTrue(fingerprint_errors(self.repo))
 
 
 class WalkFallbackTests(unittest.TestCase):

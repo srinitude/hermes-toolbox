@@ -13,7 +13,8 @@ from pathlib import Path
 
 import yaml
 
-HERMES_SRC = Path.home() / '.hermes' / 'hermes-agent'
+DEFAULT_HERMES_SRC = Path.home() / '.hermes' / 'hermes-agent'
+HERMES_SRC = Path(os.environ.get('HERMES_RUNTIME_SRC', DEFAULT_HERMES_SRC))
 HERMES_VENV_PYTHON = HERMES_SRC / 'venv' / 'bin' / 'python'
 HERMES_BIN = shutil.which('hermes') or str(Path.home() / '.local' / 'bin' / 'hermes')
 PROBE_SCRIPT = Path(__file__).resolve().parent / 'plugin_probe.py'

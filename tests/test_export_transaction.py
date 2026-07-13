@@ -1,6 +1,7 @@
 """Transactional export contracts: failures preserve last-known-good bytes."""
 from __future__ import annotations
 
+import re
 import shutil
 import tempfile
 import unittest
@@ -53,11 +54,6 @@ class FailureIsolationTests(TransactionCase):
         (self.source / 'README.md').unlink()
         self.assert_last_known_good_preserved(self.export())
 
-    def test_sanitizer_validation_failure_preserves_existing_package(self):
-        credential_line = 'api_key = ' + 'abcdef0123456789abcdef'
-        (self.source / 'notes.md').write_text(credential_line + '\n', encoding='utf-8')
-        self.assert_last_known_good_preserved(self.export())
-
     def test_interrupted_staging_copy_preserves_existing_package(self):
         blocked = self.source / 'data' / 'payload.txt'
         blocked.parent.mkdir()
@@ -78,6 +74,80 @@ class FailureIsolationTests(TransactionCase):
         skill_md.write_text('---\nname: complete-skill\n---\n\ntoo short\n',
                             encoding='utf-8')
         self.assert_last_known_good_preserved(self.export())
+
+
+class SanitizationFailureTests(TransactionCase):
+    def test_sanitizer_validation_failure_preserves_existing_package(self):
+        credential_line = 'api_key = ' + 'abcdef0123456789abcdef'
+        (self.source / 'notes.md').write_text(credential_line + '\n', encoding='utf-8')
+        self.assert_last_known_good_preserved(self.export())
+
+    def test_semantic_corruption_preserves_existing_package(self):
+        executable = (Path('/') / 'home' / 'example-user' / '.hermes' /
+                      'hermes-agent' / 'venv' / 'bin' / 'python')
+        corrupt = f'Run {executable} task.py\n'
+        (self.source / 'notes.md').write_text(corrupt, encoding='utf-8')
+        result = self.export()
+        self.assert_last_known_good_preserved(result)
+        self.assertIn('placeholder-bearing executable path', result.stderr)
+
+    def test_case_variant_executable_placeholder_preserves_package(self):
+        corrupt = 'Run <PRIVATE-TERM>/venv/bin/python task.py\n'
+        (self.source / 'notes.md').write_text(corrupt, encoding='utf-8')
+        result = self.export()
+        self.assert_last_known_good_preserved(result)
+        self.assertIn('placeholder-bearing executable path', result.stderr)
+
+
+class ProductAuthorExportTests(TransactionCase):
+    def export_author(self, author: str, prose: str | None = None):
+        skill = self.home / 'skills' / SKILL_REL / 'SKILL.md'
+        source = skill.read_text(encoding='utf-8')
+        source = re.sub(r'(?m)^author: .+$', f'author: {author}', source, count=1)
+        skill.write_text(source + f'\nRun {prose or author}.\n', encoding='utf-8')
+        return self.export()
+
+    def test_explicit_product_authors_pass_full_export_validation(self):
+        authors = ('Hermes Agent', 'Nous Research', 'OpenAI Codex', 'OpenAI',
+                   'Acme Software')
+        for author in authors:
+            with self.subTest(author=author):
+                result = self.export_author(author)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_unknown_single_word_author_remains_identity_protected(self):
+        result = self.export_author('Zaphod')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('approved author identity', result.stderr)
+
+    def test_unknown_two_word_author_remains_identity_protected(self):
+        result = self.export_author('Jane Team', 'jane team')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('approved author identity', result.stderr)
+
+    def test_author_identity_match_requires_word_boundaries(self):
+        result = self.export_author('Jane Team', 'janet teamwork')
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class MarkupExportTests(TransactionCase):
+    def test_valid_html_passes_full_export_validation(self):
+        readme = self.source / 'README.md'
+        html = '\n<a href="https://example.com">docs</a>\n<details open>text</details>\n'
+        readme.write_text(readme.read_text(encoding='utf-8') + html, encoding='utf-8')
+        result = self.export()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_malformed_known_placeholders_fail_closed(self):
+        for malformed in ('<<private-term>', '<private-term?', '<private-term!'):
+            with self.subTest(malformed=malformed):
+                readme = self.source / 'README.md'
+                baseline = readme.read_text(encoding='utf-8')
+                readme.write_text(baseline + f'\n{malformed}\n', encoding='utf-8')
+                result = self.export()
+                self.assert_last_known_good_preserved(result)
+                self.assertIn('malformed placeholder', result.stderr)
+                readme.write_text(baseline, encoding='utf-8')
 
 
 class SymlinkFailureTests(TransactionCase):
