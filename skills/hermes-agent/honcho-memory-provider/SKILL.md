@@ -1,7 +1,7 @@
 ---
 name: honcho-memory-provider
 description: Configure and verify Honcho as Hermes Agent's external memory provider with profile-aware peer isolation.
-version: 0.1.0
+version: 0.1.1
 author: Kiren Srinivasan
 license: Apache-2.0
 metadata:

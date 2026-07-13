@@ -1,7 +1,7 @@
 ---
 name: first-party-integration-audits
 description: "Use when auditing whether two tools, agents, plugins, or protocols integrate, especially when the user restricts evidence to first-party documentation and official repositories. Produces a release-pinned, read-only compatibility and trust assessment that separates public contract, stable implementation, source-only internals, preview behavior, and unsupported speculation."
-version: 0.2.12
+version: 0.2.13
 author: Kiren Srinivasan
 license: Apache-2.0
 platforms: [linux, macos, windows]
@@ -396,6 +396,7 @@ When the user prohibits writes or installs:
 
 ## Supporting References
 
+- For executing cross-product integration plans from first-party evidence through bounded implementation and acceptance, load `references/cross-product-integration-plan-execution.md`.
 - For cross-host terminal thin clients, native-browser previews, SSH/Tailscale routing, localhost semantics, and remote real-desktop control through MCP, load `references/cross-host-terminal-web-desktop-bridges.md`.
 - For cross-host signed-in browser CLI/MCP/REPL integrations, capability-specific forced SSH identities, maintenance-only raw tools, schema allowlisting, shared desktop leases, and no-fallback safety, load `references/browser-cli-mcp-repl-bridges.md`.
 - For the release-pinned Hermes/Herdr ownership matrix, recommended no-core-change surfaces, primitive distinctions, and documented source/prose discrepancies at `v2026.7.7.2`, load `references/hermes-release-v2026.7.7.2-integration-map.md`.

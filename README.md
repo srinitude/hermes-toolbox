@@ -12,16 +12,25 @@ Compatible Hermes release: `hermes-agent` 0.18.2 (release `v2026.7.7.2`).
 
 ## Current public manifest
 
-- Skills: 3
+- Skills: 12
 - Plugin packages: 0
 - Profile packages: 0
 - Personality presets: 1
 
 Skills under `skills/`:
 
+- `autonomous-ai-agents/openrouter-mcp-server`
+- `hermes-agent/editor-integration`
 - `hermes-agent/hermes-config-audits`
 - `hermes-agent/honcho-memory-provider`
+- `hermes-agent/profile-builder`
 - `research/first-party-integration-audits`
+- `software-development/architecture-contract-audits`
+- `software-development/bounded-development-execution`
+- `software-development/goal-prompt`
+- `software-development/plan-update-executor`
+- `software-development/plugin-builder`
+- `software-development/prompt-enhancer`
 
 Personality presets under `primitives/personalities/`:
 

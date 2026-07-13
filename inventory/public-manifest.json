@@ -12,16 +12,52 @@
   "profiles": [],
   "skills": [
     {
+      "path": "skills/autonomous-ai-agents/openrouter-mcp-server/SKILL.md",
+      "sha256": "88ec87e69136d57dede327cead28500b6b2d3099b95c2f035ae7020c80d176e9"
+    },
+    {
+      "path": "skills/hermes-agent/editor-integration/SKILL.md",
+      "sha256": "8335206d814dfb6e0307049d6cdcbef44d226e6ac5ae3a20e94c29575922caea"
+    },
+    {
       "path": "skills/hermes-agent/hermes-config-audits/SKILL.md",
-      "sha256": "fd82b8130b542bfcbcd821095f60e046fce1246c99d56a079b3b5046efce4161"
+      "sha256": "531fdcfafd539bc81b88807468c36f8c164ea2b66aa66e88175d556d27e786e8"
     },
     {
       "path": "skills/hermes-agent/honcho-memory-provider/SKILL.md",
-      "sha256": "78d659d2f09fac96d569ee5c038230547fcea2a3bebd5f1f9912eb0a48c10d49"
+      "sha256": "1ee1b937a6ddcffeac2abf9184d510cad11bb0d0b4676d4a9442bdc8c4783481"
+    },
+    {
+      "path": "skills/hermes-agent/profile-builder/SKILL.md",
+      "sha256": "5438e4231636bfe2660aa107c0b1fd7408298a9e9a40caa83a28e034416675fc"
     },
     {
       "path": "skills/research/first-party-integration-audits/SKILL.md",
-      "sha256": "e15f707dcbcffb7eb87c7309ca450e7f00d91dcaa0db76389c5e4661b417c597"
+      "sha256": "855d7cd3bdf15bcbf2acf3703235f86560c2b69fc75fe467590cbe3cdfb8b6af"
+    },
+    {
+      "path": "skills/software-development/architecture-contract-audits/SKILL.md",
+      "sha256": "5ed2831802b596a494f1403aba6fefbdb90062ac6c0da9575ba8c968d205a03e"
+    },
+    {
+      "path": "skills/software-development/bounded-development-execution/SKILL.md",
+      "sha256": "d66a81f965a6411a61fa7aca3ae265a11c7cdb2dcb430512153ca26a7c690cd4"
+    },
+    {
+      "path": "skills/software-development/goal-prompt/SKILL.md",
+      "sha256": "589c24a39fc60a0ebb2255a603637bf04f9139a3a648e60fc9386d24274e9251"
+    },
+    {
+      "path": "skills/software-development/plan-update-executor/SKILL.md",
+      "sha256": "cacf818949f1fa55dfc836e12428299584ded5f67c5f6248c0801a9cc6f8a4c2"
+    },
+    {
+      "path": "skills/software-development/plugin-builder/SKILL.md",
+      "sha256": "74135f5f93a506c47cd2b78e2f409a4c88b23c5b917ebd30069c9d227140f8e9"
+    },
+    {
+      "path": "skills/software-development/prompt-enhancer/SKILL.md",
+      "sha256": "383cca8d0cdb36fbf4b474e79cafbdea7b5afba48b4938b80b785893123f2d2f"
     }
   ],
   "version": 1

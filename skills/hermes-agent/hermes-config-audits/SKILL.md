@@ -1,13 +1,13 @@
 ---
 name: hermes-config-audits
 description: Audit and explain Hermes Agent profile config.yaml schemas safely, using first-party docs, live CLI, and local source without exposing secrets.
-version: 0.1.0
+version: 0.1.1
 author: Kiren Srinivasan
 license: Apache-2.0
 metadata:
   hermes:
     tags: [hermes-agent, configuration, profiles, config-yaml, audit, safety]
-    related_skills: [hermes-agent]
+    related_skills: [hermes-agent, prompt-enhancer]
 ---
 
 # Hermes Config Audits

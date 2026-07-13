@@ -11,9 +11,10 @@ import yaml
 from tests.support import REPO
 
 NAME_RE = re.compile(r'[a-z0-9][a-z0-9/_-]*')
-WITHDRAWN_RELATED_SKILLS = {
-    'openrouter-mcp-server', 'profile-builder', 'plan-update-executor',
-    'plugin-builder', 'prompt-enhancer', 'goal-prompt',
+BUNDLED_RELATED_SKILLS = {
+    'codebase-inspection', 'hermes-agent', 'hermes-agent-skill-authoring',
+    'plan', 'requesting-code-review', 'systematic-debugging',
+    'test-driven-development',
 }
 SELECT_RE = re.compile(r'--(skill|plugin|profile)\s+(\S+)')
 ENABLE_RE = re.compile(r'hermes plugins enable\s+(\S+)')
@@ -94,14 +95,18 @@ class PublicConfigContractTests(DocsContractCase):
 
 
 class RelatedSkillMetadataTests(DocsContractCase):
-    def test_public_skills_do_not_advertise_withdrawn_skills(self):
+    def test_public_skills_advertise_available_related_skills(self):
+        published = {Path(name).name for name in entry_names(self.data, 'skills')}
+        available = published | BUNDLED_RELATED_SKILLS
         for entry in self.data['skills']:
             text = (REPO / entry['path']).read_text(encoding='utf-8')
             frontmatter = yaml.safe_load(text.split('---', 2)[1]) or {}
             metadata = ((frontmatter.get('metadata') or {}).get('hermes') or {})
             related = set(metadata.get('related_skills') or [])
-            blocked = sorted(related & WITHDRAWN_RELATED_SKILLS)
-            self.assertFalse(blocked, f"{entry['path']} advertises withdrawn {blocked}")
+            unavailable = sorted(related - available)
+            self.assertFalse(
+                unavailable, f"{entry['path']} advertises unavailable {unavailable}"
+            )
 
 
 class ManifestCountTests(DocsContractCase):

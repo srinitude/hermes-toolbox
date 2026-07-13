@@ -10,9 +10,18 @@ from pathlib import Path
 from toolbox_common import git_info_dir, read_terms
 
 DEFAULT_PUBLIC_SKILLS = [
+    'autonomous-ai-agents/openrouter-mcp-server',
+    'hermes-agent/editor-integration',
     'hermes-agent/hermes-config-audits',
     'hermes-agent/honcho-memory-provider',
+    'hermes-agent/profile-builder',
     'research/first-party-integration-audits',
+    'software-development/architecture-contract-audits',
+    'software-development/bounded-development-execution',
+    'software-development/goal-prompt',
+    'software-development/plan-update-executor',
+    'software-development/plugin-builder',
+    'software-development/prompt-enhancer',
 ]
 
 
