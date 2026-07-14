@@ -12,15 +12,11 @@ import sys
 import tempfile
 from pathlib import Path
 
-import yaml
-
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from package_checks import check_registration_parity  # noqa: E402
-from real_runtime import (  # noqa: E402
-    DEFAULT_PAYLOAD, install_profile, probe_plugin_package, require_runtime, run_hermes,
-)
+from plugin_checks import governed_registration_errors  # noqa: E402
+from real_runtime import install_profile, require_runtime, run_hermes  # noqa: E402
 
 EXPECTED_PLUGINS = {
     'hermes-tutorial-compass', 'hermes-setup-coach', 'hermes-concept-glossary',
@@ -54,31 +50,11 @@ def plugin_static_errors(plugin_dir: Path, rel: str) -> list[str]:
             if not (plugin_dir / name).is_file()]
 
 
-def handler_errors(name: str, probe: dict, rel: str) -> list[str]:
-    errors = []
-    for tool, call in probe['tool_calls'].items():
-        output = call.get('output') or {}
-        if 'success' not in output or output.get('plugin') != name:
-            errors.append(f'{rel}: tool {tool} returned an invalid payload')
-        if 'success' not in (call.get('bad_input') or {}):
-            errors.append(f'{rel}: tool {tool} bad-input path is invalid')
-    for command, call in probe['command_calls'].items():
-        if not str(call.get('output') or '').strip():
-            errors.append(f'{rel}: command {command} returned empty output')
-    return errors
-
-
 def plugin_runtime_errors(name: str) -> list[str]:
     plugin_dir = REPO / 'plugins' / name
     rel = f'plugins/{name}'
     static = plugin_static_errors(plugin_dir, rel)
-    if static:
-        return static
-    declared = yaml.safe_load((plugin_dir / 'plugin.yaml').read_text(encoding='utf-8'))
-    probe = probe_plugin_package(plugin_dir, payload=DEFAULT_PAYLOAD)
-    if not probe['plugin'].get('enabled'):
-        return [f"{rel}: real manager did not enable plugin: {probe['plugin'].get('error')}"]
-    return check_registration_parity(declared, probe, rel) + handler_errors(name, probe, rel)
+    return static or governed_registration_errors(plugin_dir, rel, REPO)
 
 
 def profile_errors() -> list[str]:

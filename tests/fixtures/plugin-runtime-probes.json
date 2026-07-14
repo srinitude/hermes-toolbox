@@ -1,0 +1,37 @@
+{
+  "aaa-plugin": {
+    "call_commands": ["fixture-status"],
+    "malformed_tools": ["fixture_echo"],
+    "normal_tools": ["fixture_echo"],
+    "payload": {"message": "probe message"},
+    "skip_commands": []
+  },
+  "bbb-plugin": {
+    "call_commands": ["fixture-status"],
+    "malformed_tools": ["fixture_echo"],
+    "normal_tools": ["fixture_echo"],
+    "payload": {"message": "probe message"},
+    "skip_commands": []
+  },
+  "complete-plugin": {
+    "call_commands": ["fixture-status"],
+    "malformed_tools": ["fixture_echo"],
+    "normal_tools": ["fixture_echo"],
+    "payload": {"message": "probe message"},
+    "skip_commands": []
+  },
+  "demo-plugin": {
+    "call_commands": ["fixture-status"],
+    "malformed_tools": ["fixture_echo"],
+    "normal_tools": ["fixture_echo"],
+    "payload": {"message": "probe message"},
+    "skip_commands": []
+  },
+  "retained-plugin": {
+    "call_commands": ["fixture-status"],
+    "malformed_tools": ["fixture_echo"],
+    "normal_tools": ["fixture_echo"],
+    "payload": {"message": "probe message"},
+    "skip_commands": []
+  }
+}

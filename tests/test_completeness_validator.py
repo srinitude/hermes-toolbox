@@ -1,17 +1,16 @@
-"""validate-package-completeness must run the native profile, personality,
-and skill/reference gates, not only the legacy shallow package checks."""
+"""Native completeness gates for profiles, personalities, skills, and plugins."""
 from __future__ import annotations
 
-import json
-import shutil
-import subprocess
-import sys
+import json, shutil
+import subprocess, sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from tests.plugin_runtime_cases import BROKEN_BEHAVIORS, plugin_source
-from tests.support import FIXTURES, REPO, SCRIPTS, add_scripts_path
+from tests.support import (
+    FIXTURES, REPO, SCRIPTS, add_scripts_path, make_completeness_repo,
+)
 
 add_scripts_path()
 
@@ -29,8 +28,7 @@ class CompletenessRepoCase(unittest.TestCase):
     def setUp(self):
         self.base = Path(tempfile.mkdtemp(prefix='completeness-native-'))
         self.addCleanup(shutil.rmtree, self.base, True)
-        self.repo = self.base / 'repo'
-        self.repo.mkdir()
+        self.repo = make_completeness_repo(self.base)
 
     def add_profile(self) -> Path:
         pkg = self.repo / 'profiles' / 'complete-profile'

@@ -10,7 +10,9 @@ import yaml
 
 from candidate_policy import PolicyConfig, decide_plugin, plugin_candidate
 from package_swap import recover_package, remove_artifact, replace_package
-from plugin_checks import plugin_static_errors, registration_errors
+from plugin_checks import (
+    governed_registration_errors, plugin_static_errors,
+)
 from safety_checks import (
     path_is_forbidden, skill_reference_errors, validate_public_skill,
 )
@@ -95,7 +97,8 @@ def _plugin_staging_errors(staging: Path, name: str, repo: Path) -> list[str]:
     if errors:
         return errors
     errors = _manifest_errors(staging, name) + staged_text_errors(staging, repo)
-    return errors or registration_errors(staging, f'plugins/{name}')
+    return errors or governed_registration_errors(
+        staging, f'plugins/{name}', repo)
 
 
 def _skill_staging_errors(staging: Path, rel: Path, repo: Path) -> list[str]:

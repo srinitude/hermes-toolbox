@@ -10,6 +10,7 @@ import yaml
 from package_checks import (
     check_package_manifest, check_registration_parity, find_placeholders,
 )
+from plugin_probe_policy import load_plugin_probe_policy
 from real_runtime import probe_plugin_package
 from toolbox_common import check_child_file
 
@@ -65,16 +66,26 @@ def base_call_error(call: dict) -> str | None:
     return None
 
 
-def tool_behavior_error(call: dict, expected: str) -> str | None:
+def tool_behavior_error(
+    call: dict, expected: str, check_normal: bool, check_malformed: bool,
+) -> str | None:
+    error = base_call_error(call)
+    if error:
+        return error
     output = call.get('output')
     bad_input = call.get('bad_input')
-    if not isinstance(output, dict) or output.get('success') is not True:
+    if check_normal and (
+            not isinstance(output, dict) or output.get('success') is not True):
         return 'normal input did not return JSON success=true'
-    if not isinstance(bad_input, dict) or bad_input.get('success') is not False:
+    if check_malformed and (
+            not isinstance(bad_input, dict) or bad_input.get('success') is not False):
         return 'bad input did not return JSON success=false'
-    identities = [item.get('plugin') for item in (output, bad_input) if 'plugin' in item]
-    if any(identity != expected for identity in identities):
-        return f'did not report declared plugin identity {expected}'
+    normal_identity = output.get('plugin') if isinstance(output, dict) else None
+    malformed_identity = bad_input.get('plugin') if isinstance(bad_input, dict) else None
+    if check_normal and normal_identity != expected:
+        return f'normal result did not report declared plugin identity {expected}'
+    if check_malformed and malformed_identity != expected:
+        return f'malformed result did not report declared plugin identity {expected}'
     return None
 
 
@@ -93,17 +104,39 @@ def call_errors(calls: dict, label: str, rel: str, behavior,
     return errors
 
 
-def handler_errors(probe: dict, rel: str, expected: str) -> list[str]:
-    return (call_errors(probe.get('tool_calls') or {}, 'tool', rel,
-                        tool_behavior_error, expected)
+def tool_call_errors(probe: dict, rel: str, expected: str,
+                     policy: dict) -> list[str]:
+    normal = set(policy['normal_tools'])
+    malformed = set(policy['malformed_tools'])
+    errors = []
+    for name, call in (probe.get('tool_calls') or {}).items():
+        error = tool_behavior_error(
+            call, expected, name in normal, name in malformed)
+        if error:
+            errors.append(f'{rel}: tool {name} {error}')
+    return errors
+
+
+def handler_errors(probe: dict, rel: str, expected: str,
+                   policy: dict) -> list[str]:
+    return (tool_call_errors(probe, rel, expected, policy)
             + call_errors(probe.get('command_calls') or {}, 'command', rel,
                           command_behavior_error, expected))
 
 
-def registration_errors(pkg: Path, rel: str) -> list[str]:
+def registration_errors(pkg: Path, rel: str,
+                        policy: dict | None = None) -> list[str]:
     declared = yaml.safe_load((pkg / 'plugin.yaml').read_text(encoding='utf-8'))
+    selected = policy or {
+        'normal_tools': [], 'malformed_tools': [], 'call_commands': [],
+        'payload': {},
+    }
     try:
-        probe = probe_plugin_package(pkg)
+        probe = probe_plugin_package(
+            pkg, payload=selected['payload'],
+            normal_tools=selected['normal_tools'],
+            malformed_tools=selected['malformed_tools'],
+            call_commands=selected['call_commands'])
     except (Exception, SystemExit) as exc:
         return [f'{rel}: real manager probe failed: {exc}']
     plugin = probe.get('plugin') or {}
@@ -111,7 +144,42 @@ def registration_errors(pkg: Path, rel: str) -> list[str]:
         return [f"{rel}: real manager did not enable plugin: {plugin.get('error')}"]
     expected = str(declared.get('name', ''))
     return (check_registration_parity(declared, probe, rel)
-            + handler_errors(probe, rel, expected))
+            + handler_errors(probe, rel, expected, selected))
+
+
+def selection_errors(declared: set, selected: set, label: str, rel: str) -> list[str]:
+    missing = declared - selected
+    extra = selected - declared
+    errors = []
+    if missing:
+        errors.append(f"{rel}: unprobed {label}: {', '.join(sorted(missing))}")
+    if extra:
+        errors.append(f"{rel}: policy selects undeclared {label}: {', '.join(sorted(extra))}")
+    return errors
+
+
+def policy_declaration_errors(declared: dict, policy: dict, rel: str) -> list[str]:
+    tools = set(declared.get('provides_tools') or [])
+    selected_tools = set(policy['normal_tools']) | set(policy['malformed_tools'])
+    commands = set(declared.get('provides_commands') or [])
+    called_commands = set(policy['call_commands'])
+    skipped_commands = set(policy['skip_commands'])
+    errors = selection_errors(tools, selected_tools, 'tools', rel)
+    errors += selection_errors(commands, called_commands | skipped_commands, 'commands', rel)
+    overlap = called_commands & skipped_commands
+    if overlap:
+        errors.append(f"{rel}: commands both called and skipped: {', '.join(sorted(overlap))}")
+    return errors
+
+
+def governed_registration_errors(pkg: Path, rel: str, repo: Path) -> list[str]:
+    name = Path(rel).name
+    policy, error = load_plugin_probe_policy(repo, name)
+    if error or policy is None:
+        return [f'{rel}: {error or "missing plugin probe policy"}']
+    declared = yaml.safe_load((pkg / 'plugin.yaml').read_text(encoding='utf-8'))
+    errors = policy_declaration_errors(declared, policy, rel)
+    return errors or registration_errors(pkg, rel, policy)
 
 
 def plugin_static_errors(pkg: Path, rel: str, repo: Path) -> list[str]:
@@ -127,4 +195,4 @@ def plugin_static_errors(pkg: Path, rel: str, repo: Path) -> list[str]:
 
 def plugin_package_errors(pkg: Path, rel: str, repo: Path) -> list[str]:
     errors = plugin_static_errors(pkg, rel, repo)
-    return errors or registration_errors(pkg, rel)
+    return errors or governed_registration_errors(pkg, rel, repo)

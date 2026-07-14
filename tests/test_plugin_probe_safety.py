@@ -13,6 +13,9 @@ from tests.support import add_scripts_path
 add_scripts_path()
 
 from package_checks import check_registration_parity  # noqa: E402
+from plugin_checks import (  # noqa: E402
+    governed_registration_errors, registration_errors,
+)
 from real_runtime import (  # noqa: E402
     _probe_report, probe_plugin_package, run_probe, write_enabled_config,
 )
@@ -21,6 +24,28 @@ from tests.plugin_runtime_cases import write_cli_plugin, write_side_effect_plugi
 
 def declared(package: Path) -> dict:
     return yaml.safe_load((package / 'plugin.yaml').read_text(encoding='utf-8'))
+
+
+class PackageGateSafetyTests(unittest.TestCase):
+    def setUp(self):
+        self.base = tempfile.TemporaryDirectory(prefix='package-gate-')
+        self.addCleanup(self.base.cleanup)
+        self.root = Path(self.base.name)
+        self.marker = self.root / 'handler-called'
+        self.package = write_side_effect_plugin(self.root, self.marker)
+
+    def test_missing_publisher_policy_fails_without_handlers(self):
+        errors = governed_registration_errors(
+            self.package, 'plugins/side-effect-plugin', self.root)
+        self.assertFalse(self.marker.exists())
+        self.assertTrue(any('probe policy' in error for error in errors), errors)
+
+    def test_registration_only_parity_never_calls_handlers(self):
+        errors = registration_errors(
+            self.package, 'plugins/side-effect-plugin', {})
+        self.assertFalse(self.marker.exists())
+        self.assertTrue(any('pre_tool' in error for error in errors), errors)
+        self.assertTrue(any('CLI command' in error for error in errors), errors)
 
 
 class RestrictedProbeTests(unittest.TestCase):

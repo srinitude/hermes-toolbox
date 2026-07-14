@@ -27,6 +27,17 @@ def make_repo(base: Path) -> Path:
     shutil.copytree(SCRIPTS, repo / 'scripts',
                     ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     subprocess.run(['git', 'init', '-q'], cwd=repo, check=True)
+    shutil.copy2(FIXTURES / 'plugin-runtime-probes.json',
+                 repo / '.git/info/public-plugin-handler-allowlist.json')
+    return repo
+
+
+def make_completeness_repo(base: Path) -> Path:
+    repo = base / 'repo'
+    inventory = repo / 'inventory'
+    inventory.mkdir(parents=True)
+    shutil.copy2(FIXTURES / 'plugin-runtime-probes.json',
+                 inventory / 'plugin-runtime-probes.json')
     return repo
 
 

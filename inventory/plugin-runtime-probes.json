@@ -1,0 +1,425 @@
+{
+  "brand-chaos-oracle": {
+    "call_commands": [],
+    "malformed_tools": [],
+    "normal_tools": [],
+    "skip_commands": [
+      "brand-oracle"
+    ]
+  },
+  "hermes-accessibility-coach": {
+    "call_commands": [
+      "plain-language"
+    ],
+    "malformed_tools": [
+      "tutorial_simplify_explanation",
+      "tutorial_detect_jargon"
+    ],
+    "normal_tools": [
+      "tutorial_simplify_explanation",
+      "tutorial_detect_jargon"
+    ],
+    "skip_commands": []
+  },
+  "hermes-assessment-certifier": {
+    "call_commands": [
+      "quiz",
+      "certify"
+    ],
+    "malformed_tools": [
+      "tutorial_generate_quiz",
+      "tutorial_grade_answer",
+      "tutorial_assign_capstone",
+      "tutorial_evaluate_capstone"
+    ],
+    "normal_tools": [
+      "tutorial_generate_quiz",
+      "tutorial_grade_answer",
+      "tutorial_assign_capstone",
+      "tutorial_evaluate_capstone"
+    ],
+    "skip_commands": []
+  },
+  "hermes-capstone-orchestrator": {
+    "call_commands": [
+      "capstone"
+    ],
+    "malformed_tools": [
+      "tutorial_plan_capstone",
+      "tutorial_review_capstone",
+      "tutorial_score_mastery"
+    ],
+    "normal_tools": [
+      "tutorial_plan_capstone",
+      "tutorial_review_capstone",
+      "tutorial_score_mastery"
+    ],
+    "skip_commands": []
+  },
+  "hermes-command-lab": {
+    "call_commands": [
+      "command-lab",
+      "practice-cli"
+    ],
+    "malformed_tools": [
+      "tutorial_generate_cli_exercise",
+      "tutorial_check_cli_answer"
+    ],
+    "normal_tools": [
+      "tutorial_generate_cli_exercise",
+      "tutorial_check_cli_answer"
+    ],
+    "skip_commands": []
+  },
+  "hermes-concept-glossary": {
+    "call_commands": [
+      "what-is"
+    ],
+    "malformed_tools": [
+      "explain_hermes_term"
+    ],
+    "normal_tools": [
+      "explain_hermes_term"
+    ],
+    "skip_commands": []
+  },
+  "hermes-config-lab": {
+    "call_commands": [
+      "config-lab",
+      "config-explain"
+    ],
+    "malformed_tools": [
+      "tutorial_explain_config_key",
+      "tutorial_recommend_config_path",
+      "tutorial_check_config_safety"
+    ],
+    "normal_tools": [
+      "tutorial_explain_config_key",
+      "tutorial_recommend_config_path",
+      "tutorial_check_config_safety"
+    ],
+    "skip_commands": []
+  },
+  "hermes-cron-automation-lab": {
+    "call_commands": [
+      "cron-lab",
+      "schedule-practice"
+    ],
+    "malformed_tools": [
+      "tutorial_validate_cron_prompt",
+      "tutorial_explain_schedule",
+      "tutorial_make_safe_cron_example"
+    ],
+    "normal_tools": [
+      "tutorial_validate_cron_prompt",
+      "tutorial_explain_schedule",
+      "tutorial_make_safe_cron_example"
+    ],
+    "skip_commands": []
+  },
+  "hermes-docs-sync-tutor": {
+    "call_commands": [
+      "docs-check"
+    ],
+    "malformed_tools": [
+      "tutorial_check_docs_link",
+      "tutorial_compare_lesson_to_docs",
+      "tutorial_flag_stale_lesson"
+    ],
+    "normal_tools": [
+      "tutorial_check_docs_link",
+      "tutorial_compare_lesson_to_docs",
+      "tutorial_flag_stale_lesson"
+    ],
+    "skip_commands": []
+  },
+  "hermes-example-gallery": {
+    "call_commands": [
+      "examples",
+      "recipe"
+    ],
+    "malformed_tools": [
+      "tutorial_find_example",
+      "tutorial_customize_example"
+    ],
+    "normal_tools": [
+      "tutorial_find_example",
+      "tutorial_customize_example"
+    ],
+    "skip_commands": []
+  },
+  "hermes-gateway-lab": {
+    "call_commands": [
+      "gateway-lab",
+      "bot-safety-check"
+    ],
+    "malformed_tools": [
+      "tutorial_explain_gateway_platform",
+      "tutorial_gateway_readiness_check",
+      "tutorial_explain_gateway_error"
+    ],
+    "normal_tools": [
+      "tutorial_explain_gateway_platform",
+      "tutorial_gateway_readiness_check",
+      "tutorial_explain_gateway_error"
+    ],
+    "skip_commands": []
+  },
+  "hermes-learning-progress": {
+    "call_commands": [
+      "progress",
+      "review",
+      "resume-tutorial"
+    ],
+    "malformed_tools": [
+      "tutorial_record_progress",
+      "tutorial_get_progress",
+      "tutorial_mark_lesson_complete",
+      "tutorial_recommend_review"
+    ],
+    "normal_tools": [
+      "tutorial_record_progress",
+      "tutorial_get_progress",
+      "tutorial_mark_lesson_complete",
+      "tutorial_recommend_review"
+    ],
+    "skip_commands": []
+  },
+  "hermes-mcp-lab": {
+    "call_commands": [
+      "mcp-lab",
+      "mcp-or-plugin"
+    ],
+    "malformed_tools": [
+      "tutorial_compare_mcp_vs_plugin",
+      "tutorial_explain_mcp_manifest",
+      "tutorial_plan_mcp_setup"
+    ],
+    "normal_tools": [
+      "tutorial_compare_mcp_vs_plugin",
+      "tutorial_explain_mcp_manifest",
+      "tutorial_plan_mcp_setup"
+    ],
+    "skip_commands": []
+  },
+  "hermes-memory-lab": {
+    "call_commands": [
+      "memory-lab",
+      "memory-quiz"
+    ],
+    "malformed_tools": [
+      "tutorial_classify_memory_candidate",
+      "tutorial_memory_vs_skill_vs_session"
+    ],
+    "normal_tools": [
+      "tutorial_classify_memory_candidate",
+      "tutorial_memory_vs_skill_vs_session"
+    ],
+    "skip_commands": []
+  },
+  "hermes-plugin-builder-lab": {
+    "call_commands": [
+      "plugin-lab",
+      "plugin-design-review"
+    ],
+    "malformed_tools": [
+      "tutorial_choose_plugin_surface",
+      "tutorial_review_plugin_spec",
+      "tutorial_check_plugin_manifest"
+    ],
+    "normal_tools": [
+      "tutorial_choose_plugin_surface",
+      "tutorial_review_plugin_spec",
+      "tutorial_check_plugin_manifest"
+    ],
+    "skip_commands": []
+  },
+  "hermes-profile-builder-lab": {
+    "call_commands": [
+      "profile-builder-lab",
+      "design-profile"
+    ],
+    "malformed_tools": [
+      "tutorial_review_profile_spec",
+      "tutorial_map_goal_to_profile_primitives"
+    ],
+    "normal_tools": [
+      "tutorial_review_profile_spec",
+      "tutorial_map_goal_to_profile_primitives"
+    ],
+    "skip_commands": []
+  },
+  "hermes-profiles-lab": {
+    "call_commands": [
+      "profiles-lab",
+      "profile-simulator"
+    ],
+    "malformed_tools": [
+      "tutorial_explain_profile_layout",
+      "tutorial_compare_profile_creation_modes",
+      "tutorial_plan_profile"
+    ],
+    "normal_tools": [
+      "tutorial_explain_profile_layout",
+      "tutorial_compare_profile_creation_modes",
+      "tutorial_plan_profile"
+    ],
+    "skip_commands": []
+  },
+  "hermes-prompting-lab": {
+    "call_commands": [
+      "prompt-lab",
+      "enhance-practice"
+    ],
+    "malformed_tools": [
+      "tutorial_score_prompt",
+      "tutorial_rewrite_prompt",
+      "tutorial_extract_prompt_scope"
+    ],
+    "normal_tools": [
+      "tutorial_score_prompt",
+      "tutorial_rewrite_prompt",
+      "tutorial_extract_prompt_scope"
+    ],
+    "skip_commands": []
+  },
+  "hermes-safety-sandbox-lab": {
+    "call_commands": [
+      "safety-lab",
+      "is-this-safe"
+    ],
+    "malformed_tools": [
+      "classify_hermes_action_risk",
+      "explain_write_surface",
+      "suggest_safer_hermes_action"
+    ],
+    "normal_tools": [
+      "classify_hermes_action_risk",
+      "explain_write_surface",
+      "suggest_safer_hermes_action"
+    ],
+    "skip_commands": []
+  },
+  "hermes-setup-coach": {
+    "call_commands": [
+      "setup-coach",
+      "setup-check",
+      "fix-setup"
+    ],
+    "malformed_tools": [
+      "tutorial_check_install",
+      "tutorial_check_provider",
+      "tutorial_explain_doctor_output"
+    ],
+    "normal_tools": [
+      "tutorial_check_install",
+      "tutorial_check_provider",
+      "tutorial_explain_doctor_output"
+    ],
+    "skip_commands": []
+  },
+  "hermes-skills-lab": {
+    "call_commands": [
+      "skills-lab",
+      "make-practice-skill"
+    ],
+    "malformed_tools": [
+      "tutorial_check_skill_shape",
+      "tutorial_compare_skill_vs_plugin"
+    ],
+    "normal_tools": [
+      "tutorial_check_skill_shape",
+      "tutorial_compare_skill_vs_plugin"
+    ],
+    "skip_commands": []
+  },
+  "hermes-tools-lab": {
+    "call_commands": [
+      "tools-lab"
+    ],
+    "malformed_tools": [
+      "tutorial_list_tool_lessons",
+      "tutorial_start_tool_lesson",
+      "tutorial_grade_tool_use"
+    ],
+    "normal_tools": [
+      "tutorial_list_tool_lessons",
+      "tutorial_start_tool_lesson",
+      "tutorial_grade_tool_use"
+    ],
+    "skip_commands": []
+  },
+  "hermes-troubleshooting-lab": {
+    "call_commands": [
+      "troubleshoot",
+      "explain-error"
+    ],
+    "malformed_tools": [
+      "tutorial_explain_error",
+      "tutorial_suggest_recovery_steps",
+      "tutorial_classify_failure"
+    ],
+    "normal_tools": [
+      "tutorial_explain_error",
+      "tutorial_suggest_recovery_steps",
+      "tutorial_classify_failure"
+    ],
+    "skip_commands": []
+  },
+  "hermes-tutorial-compass": {
+    "call_commands": [
+      "tutorial"
+    ],
+    "malformed_tools": [
+      "tutorial_get_path",
+      "tutorial_next_lesson",
+      "tutorial_explain_concept"
+    ],
+    "normal_tools": [
+      "tutorial_get_path",
+      "tutorial_next_lesson",
+      "tutorial_explain_concept"
+    ],
+    "skip_commands": []
+  },
+  "impeccable-workflow": {
+    "call_commands": [],
+    "malformed_tools": [],
+    "normal_tools": [],
+    "skip_commands": [
+      "impeccable"
+    ]
+  },
+  "kanban-workflow-control-plane": {
+    "call_commands": [],
+    "malformed_tools": [],
+    "normal_tools": [],
+    "skip_commands": [
+      "kanban-workflow"
+    ]
+  },
+  "link-agent-wallet": {
+    "call_commands": [],
+    "malformed_tools": [],
+    "normal_tools": [],
+    "skip_commands": [
+      "link"
+    ]
+  },
+  "taste-skill-workflow": {
+    "call_commands": [],
+    "malformed_tools": [],
+    "normal_tools": [],
+    "skip_commands": [
+      "taste-skill"
+    ]
+  },
+  "toolcraft-workflow": {
+    "call_commands": [],
+    "malformed_tools": [],
+    "normal_tools": [],
+    "skip_commands": [
+      "toolcraft"
+    ]
+  }
+}

@@ -8,7 +8,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.support import FIXTURES, SCRIPTS, add_scripts_path
+from tests.support import (
+    FIXTURES, SCRIPTS, add_scripts_path, make_completeness_repo,
+)
 
 add_scripts_path()
 
@@ -151,7 +153,7 @@ class CompletenessCase(unittest.TestCase):
     def setUp(self):
         self.base = Path(tempfile.mkdtemp(prefix='completeness-'))
         self.addCleanup(shutil.rmtree, self.base, True)
-        self.repo = self.base / 'repo'
+        self.repo = make_completeness_repo(self.base)
         self.pkg = self.repo / 'plugins' / 'complete-plugin'
         shutil.copytree(FIXTURES / 'complete-plugin', self.pkg)
         self.write_manifest()
