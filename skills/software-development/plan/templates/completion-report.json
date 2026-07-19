@@ -1,0 +1,183 @@
+{
+  "_meta": {
+    "contract": "../references/execution-ready-plan-contract.md",
+    "validator": "../scripts/validate_completion_report.py",
+    "report_purpose": "Copy this file into a plan-owned report path and replace every placeholder with fresh execution evidence.",
+    "path_rule": "Resolve normalized artifact, evidence, and human-report paths within the completion-report directory; reject absolute paths, escapes, and symlink escapes.",
+    "evidence_file_rule": "Each evidence file is JSON that exactly matches its evidence metadata and producing validator result.",
+    "human_report_rule": "The human report is JSON containing exactly plan_id, status, checks, and check_evidence from this machine report.",
+    "plan_status_values": ["PASS", "BLOCKED"],
+    "requirement_status_values": ["PASS", "BLOCKED", "WAIVED"],
+    "required_item_status_values": ["PASS", "BLOCKED"],
+    "risk_status_values": ["open", "mitigated", "accepted"],
+    "validator_scope_values": ["task-local", "whole-plan"],
+    "evidence_kind_values": ["command", "artifact", "review", "approval", "recovery", "report"],
+    "gate_type_values": ["pre-flight", "revision", "escalation", "abort", "approval"],
+    "id_format": "TYPE-###"
+  },
+  "plan": {
+    "id": "PLAN-001",
+    "path": "",
+    "status": "BLOCKED",
+    "started_at": "",
+    "completed_at": "",
+    "status_reason": "Execution hasn't run."
+  },
+  "source_snapshot": [{"path_or_url": "", "sha256_or_version": "", "status": "unknown"}],
+  "baselines": [{"id": "BASE-001", "method": "", "expected_exit_code": 0, "actual_exit_code": null, "known_failure_signature": "", "evidence_ids": ["EVID-001"]}],
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "requirement_ids": ["REQ-001"],
+      "artifact_ids": ["ART-001"],
+      "evidence_ids": ["EVID-001"],
+      "status": "BLOCKED"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "status": "BLOCKED",
+      "task_ids": ["TASK-001"],
+      "validator_ids": ["VAL-001"],
+      "evidence_ids": ["EVID-001"],
+      "waiver_id": null
+    }
+  ],
+  "validators": [
+    {
+      "id": "VAL-001",
+      "requirement_ids": ["REQ-001"],
+      "task_ids": ["TASK-001"],
+      "scope": "whole-plan",
+      "method": "",
+      "working_directory": "",
+      "expected_exit_code": 0,
+      "actual_exit_code": null,
+      "pass_condition": "",
+      "actual_result": "",
+      "evidence_ids": ["EVID-001"],
+      "status": "BLOCKED"
+    }
+  ],
+  "gates": [
+    {
+      "id": "GATE-001",
+      "type": "pre-flight",
+      "task_ids": ["TASK-001"],
+      "validator_ids": ["VAL-001"],
+      "evidence_ids": ["EVID-001"],
+      "status": "BLOCKED",
+      "owner": ""
+    }
+  ],
+  "risks": [
+    {
+      "id": "RISK-001",
+      "task_ids": ["TASK-001"],
+      "gate_ids": ["GATE-001"],
+      "evidence_ids": ["EVID-001"],
+      "status": "open",
+      "prevention_evidence": "",
+      "detection_evidence": "",
+      "response_or_rollback_evidence": "",
+      "owner": ""
+    }
+  ],
+  "changed_files": [
+    {
+      "id": "FILE-001",
+      "path": "",
+      "task_id": "TASK-001",
+      "artifact_ids": ["ART-001"],
+      "evidence_ids": ["EVID-001"],
+      "expected": true
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "ART-001",
+      "task_id": "TASK-001",
+      "evidence_ids": ["EVID-001"],
+      "path": "",
+      "sha256": null,
+      "required": true,
+      "exists": false
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EVID-001",
+      "validator_id": "VAL-001",
+      "kind": "report",
+      "check_names": ["all_requirements_pass", "all_required_validators_pass", "all_required_artifacts_exist", "all_changed_files_accounted_for", "all_required_gates_pass", "all_blockers_closed", "no_unapproved_scope_change", "human_and_machine_reports_match", "rollback_and_cleanup_complete"],
+      "covers_ids": ["PLAN-001", "REPORT-001", "BASE-001", "TASK-001", "REQ-001", "VAL-001", "GATE-001", "RISK-001", "RESIDUAL-001", "FILE-001", "ART-001", "CLEAN-001", "REVIEW-001"],
+      "path": "",
+      "sha256": null
+    }
+  ],
+  "blockers": [],
+  "waivers": [
+    {
+      "id": "WAIVER-001",
+      "scope_ids": ["REQ-001"],
+      "approver": "",
+      "reason": "",
+      "expires_or_revisit": "",
+      "remaining_risk": ""
+    }
+  ],
+  "residual_risks": [
+    {
+      "id": "RESIDUAL-001",
+      "risk_id": "RISK-001",
+      "description": "",
+      "owner": "",
+      "accepted_by": "",
+      "revisit_condition": "",
+      "evidence_ids": ["EVID-001"]
+    }
+  ],
+  "cleanup": [
+    {
+      "id": "CLEAN-001",
+      "action": "",
+      "result": "",
+      "evidence_ids": ["EVID-001"],
+      "status": "BLOCKED"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "REVIEW-001",
+      "type": "independent",
+      "evidence_ids": ["EVID-001"],
+      "status": "BLOCKED"
+    }
+  ],
+  "human_report": {"id": "REPORT-001", "path": "", "sha256": null, "status": "BLOCKED"},
+  "checks": {
+    "all_requirements_pass": false,
+    "all_required_validators_pass": false,
+    "all_required_artifacts_exist": false,
+    "all_changed_files_accounted_for": false,
+    "all_required_gates_pass": false,
+    "all_blockers_closed": false,
+    "no_unapproved_scope_change": false,
+    "human_and_machine_reports_match": false,
+    "rollback_and_cleanup_complete": false,
+    "independent_review_pass": false
+  },
+  "check_evidence": {
+    "all_requirements_pass": ["EVID-001"],
+    "all_required_validators_pass": ["EVID-001"],
+    "all_required_artifacts_exist": ["EVID-001"],
+    "all_changed_files_accounted_for": ["EVID-001"],
+    "all_required_gates_pass": ["EVID-001"],
+    "all_blockers_closed": ["EVID-001"],
+    "no_unapproved_scope_change": ["EVID-001"],
+    "human_and_machine_reports_match": ["EVID-001"],
+    "rollback_and_cleanup_complete": ["EVID-001"],
+    "independent_review_pass": ["EVID-001"]
+  }
+}

@@ -1,0 +1,22 @@
+name: hermes-toolbox
+version: 1.0.0
+description: Public Hermes profile settings, policy, and reviewed skills.
+hermes_requires: ">=0.18.2"
+author: Kiren Srinivasan
+license: MIT
+distribution_owned:
+  - .github/
+  - .gitignore
+  - AGENTS.md
+  - LICENSE
+  - README.md
+  - SOUL.md
+  - config.yaml
+  - distribution.yaml
+  - mise.toml
+  - pyproject.toml
+  - scripts/
+  - skills/
+  - templates/
+  - tests/
+  - uv.lock

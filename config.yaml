@@ -1,0 +1,82 @@
+_config_version: 9
+
+skills:
+  guard_agent_created: true
+  write_approval: false
+
+agent:
+  max_turns: 1000000
+  api_max_retries: 1
+  service_tier: fast
+  verify_on_stop: auto
+  reasoning_effort: xhigh
+  system_prompt: ""
+
+terminal:
+  backend: local
+  timeout: 180
+  home_mode: auto
+  container_cpu: 1
+  container_memory: 5120
+  container_disk: 51200
+  container_persistent: true
+  docker_mount_cwd_to_workspace: false
+  lifetime_seconds: 300
+
+compression:
+  threshold: 0.75
+  target_ratio: 0.2
+  protect_last_n: 20
+
+prompt_caching:
+  cache_ttl: 1h
+
+display:
+  personality: ""
+  resume_display: full
+  interface: tui
+
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  write_approval: false
+  memory_char_limit: 800
+  user_char_limit: 1200
+  nudge_interval: 0
+
+delegation:
+  max_iterations: 50
+  reasoning_effort: high
+  max_concurrent_children: 3
+  max_spawn_depth: 1
+  subagent_auto_approve: false
+
+goals:
+  max_turns: 1000000
+
+approvals:
+  mode: smart
+  timeout: 60
+  cron_mode: deny
+  deny:
+    - "*rm -rf /*"
+    - "*curl*|*sh*"
+    - "*wget*|*sh*"
+
+security:
+  allow_private_urls: false
+  tirith_enabled: true
+  allow_lazy_installs: false
+
+tools:
+  tool_search:
+    enabled: auto
+    threshold_pct: 10
+
+gateway:
+  strict: true
+
+provider_routing:
+  sort: throughput
+  require_parameters: true
+  data_collection: deny

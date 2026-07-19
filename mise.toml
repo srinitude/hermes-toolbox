@@ -1,0 +1,34 @@
+[tools]
+"github:rhysd/actionlint" = "1.7.12"
+python = "3.12.13"
+uv = "0.11.29"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.sync]
+description = "Install locked validation dependencies"
+run = "uv sync --frozen"
+sources = ["pyproject.toml", "uv.lock"]
+outputs = [".venv/pyvenv.cfg"]
+
+[tasks.test]
+description = "Run the distribution contract tests"
+depends = ["sync"]
+run = [
+  "uv run ruff check scripts tests skills",
+  "uv run python -m unittest discover -s tests -p 'test_*.py' -v",
+]
+
+[tasks.validate]
+description = "Run repository and distribution validation"
+depends = ["test"]
+run = [
+  "git diff --check",
+  "actionlint",
+  "uv run python -m scripts.validate_distribution",
+]
+
+[tasks.ci]
+description = "Run the local and GitHub CI contract"
+depends = ["validate"]

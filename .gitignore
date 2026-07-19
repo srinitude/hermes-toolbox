@@ -1,0 +1,48 @@
+# Task evidence and local tooling
+.hermes/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Credentials and authentication
+.env
+.env.EXAMPLE
+auth.json
+auth.lock
+*.pem
+*.key
+
+# Hermes user data and runtime state
+memories/
+sessions/
+logs/
+plans/
+workspace/
+home/
+local/
+checkpoints/
+sandboxes/
+backups/
+state.db*
+hermes_state.db*
+response_store.db*
+projects.db*
+verification_evidence.db*
+gateway.pid
+gateway_state.json
+processes.json
+.hermes_history
+.update_check
+
+# Generated caches
+*_cache/
+cache/
+node_modules/
+dist/
+build/
+
+# Platform files
+.DS_Store
+Thumbs.db
